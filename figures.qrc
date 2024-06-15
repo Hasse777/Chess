@@ -1,0 +1,17 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource>
+        <file>figures_img/White_rook.png</file>
+        <file>figures_img/White_queen.png</file>
+        <file>figures_img/White_pawn.png</file>
+        <file>figures_img/White_king.png</file>
+        <file>figures_img/White_horse.png</file>
+        <file>figures_img/White_elephant.png</file>
+        <file>figures_img/Black_rook.png</file>
+        <file>figures_img/Black_queen.png</file>
+        <file>figures_img/Black_pawn.png</file>
+        <file>figures_img/Black_king.png</file>
+        <file>figures_img/Black_horse.png</file>
+        <file>figures_img/Black_elephant.png</file>
+    </qresource>
+</RCC>
