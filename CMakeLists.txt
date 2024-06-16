@@ -18,6 +18,7 @@ add_executable(Chess
   mainWindow.cpp
   chessboard.h chessboard.cpp
   figures.qrc
+  chesspiece.h chesspiece.cpp
 )
 
 target_link_libraries(Chess PRIVATE Qt6::Widgets)

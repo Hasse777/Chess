@@ -7,6 +7,7 @@
 #include <QGraphicsRectItem>
 #include <QGraphicsTextItem>
 #include <QVector>
+#include "chesspiece.h"
 
 class ChessBoard : public QGraphicsView
 {
@@ -15,12 +16,14 @@ public:
     explicit ChessBoard(QWidget *parent = nullptr);
     ~ChessBoard();
 private:
-    QGraphicsScene *scene;
+    QGraphicsScene *m_scene;
     QVector<QGraphicsRectItem*> m_vector_square;
-    QVector<QGraphicsTextItem*> m_vector_board_numbering;
+    enum m_piece {none, king, queen, rook, elephant, horse, pawn};
+    QVector<QVector<ChessPiece*>> m_pieceOnBoard{8, QVector<ChessPiece*>(8, nullptr)};
     int m_square_Size;
     int m_indentation;
     void Paint_Board();
+    void NewGame();
 protected:
      void paintEvent(QPaintEvent *event) override;
 
