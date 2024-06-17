@@ -16,10 +16,10 @@ public:
     explicit ChessPiece(bool color, unsigned short piece, const int squareSize);
     bool getColor() const;
     bool getFirst_Move() const;
+    void setFirst_MoveFalse();
     unsigned short getPiece() const;
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 signals:
     void signal_mousePressEvent(ChessPiece* piece);
     void signal_mouseReleaseEvent(ChessPiece* piece, QPointF position);

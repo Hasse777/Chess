@@ -39,6 +39,11 @@ bool ChessPiece::getFirst_Move() const
     return m_first_move;
 }
 
+void ChessPiece::setFirst_MoveFalse()
+{
+    this->m_first_move = false;
+}
+
 unsigned short ChessPiece::getPiece() const
 {
     return m_piece;
@@ -50,9 +55,9 @@ void ChessPiece::mousePressEvent(QGraphicsSceneMouseEvent *event)
     QGraphicsPixmapItem::mousePressEvent(event);
 }
 
-void ChessPiece::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
-{
-    m_first_move = false;
-    emit signal_mouseReleaseEvent(this, event->scenePos());
-    QGraphicsPixmapItem::mouseReleaseEvent(event);
-}
+// void ChessPiece::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+// {
+//     m_first_move = false;
+//     emit signal_mouseReleaseEvent(this, event->scenePos());
+//     QGraphicsPixmapItem::mouseReleaseEvent(event);
+// }

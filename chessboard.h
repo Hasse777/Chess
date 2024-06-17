@@ -8,6 +8,7 @@
 #include <QGraphicsTextItem>
 #include <QVector>
 #include "chesspiece.h"
+#include "clickablerect.h"
 
 class ChessBoard : public QGraphicsView
 {
@@ -18,8 +19,9 @@ public:
 private:
     QGraphicsScene *m_scene;
     QVector<QGraphicsRectItem*> m_vector_square;
-    QVector<QGraphicsRectItem*> m_highlightedCells;
+    QVector<ClickableRect*> m_highlightedCells;
     QVector<QVector<ChessPiece*>> m_pieceOnBoard{8, QVector<ChessPiece*>(8, nullptr)};
+    ChessPiece* m_selectedPiece;
     enum m_piece {none, king, queen, rook, elephant, horse, pawn};
     int m_square_Size;
     int m_indentation;
@@ -33,7 +35,8 @@ protected:
 
 private slots:
      void slot_PiecePressed(ChessPiece* piece);
-     void slot_MovePiece(ChessPiece* piece, QPointF position);
+     void slot_HighlightedCell_Clicked(QGraphicsRectItem* cell);
+     //void slot_MovePiece(ChessPiece* piece, QPointF position);
 };
 
 #endif // CHESSBOARD_H
