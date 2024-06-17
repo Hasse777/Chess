@@ -9,7 +9,6 @@ MainWindow::MainWindow(QWidget *parent)
     this->m_gridLayout = new QGridLayout;
     m_gridLayout->addWidget(m_chessBoard, 0, 0);
     m_central_widget->setLayout(m_gridLayout);
-
     this->setCentralWidget(m_central_widget);
 
 }

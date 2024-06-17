@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     }
     catch (const std::runtime_error &e)
     {
-        qDebug() << "Error" << e.what();
+        qDebug() << "Error " << e.what();
         return EXIT_FAILURE;
     }
     catch (...)

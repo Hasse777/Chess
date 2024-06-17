@@ -18,16 +18,22 @@ public:
 private:
     QGraphicsScene *m_scene;
     QVector<QGraphicsRectItem*> m_vector_square;
-    enum m_piece {none, king, queen, rook, elephant, horse, pawn};
+    QVector<QGraphicsRectItem*> m_highlightedCells;
     QVector<QVector<ChessPiece*>> m_pieceOnBoard{8, QVector<ChessPiece*>(8, nullptr)};
+    enum m_piece {none, king, queen, rook, elephant, horse, pawn};
     int m_square_Size;
     int m_indentation;
-    void Paint_Board();
-    void NewGame();
+    void paint_Board();
+    void newGame();
+    void highlight_Moves(ChessPiece* piece);
+    void clear_highlight();
+    void get_Valid_Moves(ChessPiece* piece);
 protected:
      void paintEvent(QPaintEvent *event) override;
 
-signals:
+private slots:
+     void slot_PiecePressed(ChessPiece* piece);
+     void slot_MovePiece(ChessPiece* piece, QPointF position);
 };
 
 #endif // CHESSBOARD_H

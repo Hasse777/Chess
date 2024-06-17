@@ -2,8 +2,9 @@
 
 
 
+
 ChessPiece::ChessPiece(bool color, unsigned short piece, const int squareSize) : m_color{color},
-    m_piece{piece}
+    m_first_move{true}, m_piece{piece}
 {
     QString colorStr = color ? "Black" : "White";
     QString pieceName;
@@ -33,7 +34,25 @@ bool ChessPiece::getColor() const
     return m_color;
 }
 
+bool ChessPiece::getFirst_Move() const
+{
+    return m_first_move;
+}
+
 unsigned short ChessPiece::getPiece() const
 {
     return m_piece;
+}
+
+void ChessPiece::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    emit signal_mousePressEvent(this);
+    QGraphicsPixmapItem::mousePressEvent(event);
+}
+
+void ChessPiece::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+{
+    m_first_move = false;
+    emit signal_mouseReleaseEvent(this, event->scenePos());
+    QGraphicsPixmapItem::mouseReleaseEvent(event);
 }
