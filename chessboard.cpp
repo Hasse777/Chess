@@ -76,7 +76,6 @@ void ChessBoard::newGame()
             this->m_scene->addItem(m_pieceOnBoard[i][j]);
             m_pieceOnBoard[i][j]->setPos(j * m_square_Size + m_indentation, i  * m_square_Size + m_indentation);
             connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mousePressEvent, this, &ChessBoard::slot_PiecePressed);
-            //connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mouseReleaseEvent, this, &ChessBoard::slot_MovePiece);
         }
     }
 
@@ -89,7 +88,6 @@ void ChessBoard::newGame()
             this->m_scene->addItem(m_pieceOnBoard[i][j]);
             m_pieceOnBoard[i][j]->setPos(j * m_square_Size + m_indentation, i  * m_square_Size + m_indentation);
             connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mousePressEvent, this, &ChessBoard::slot_PiecePressed);
-            //connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mouseReleaseEvent, this, &ChessBoard::slot_MovePiece);
         }
     }
 }
@@ -162,18 +160,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
             if(newRow >= 8 || newRow < 0) return;
             //-----------------------------------------------------------------
 
-
             if(i < 8 && i >= 0)
             {
-                if(m_pieceOnBoard[newRow][j] != nullptr && m_pieceOnBoard[newRow][j]->getColor() != piece->getColor())
-                {
-                    ClickableRect *highlight = new ClickableRect(j * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, QColor(0, 255, 0, 100));
-                    m_scene->addItem(highlight);
-                    m_highlightedCells.push_back(highlight);
-                    connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
-                    break;
-                }
-                else if(m_pieceOnBoard[newRow][j] != nullptr)
+                if(m_pieceOnBoard[newRow][j] != nullptr)
                 {
                     break;
                 }
@@ -209,6 +198,33 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
                 m_highlightedCells.push_back(highlight);
                 connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
             }
+        }
+    }
+    // Проверка для лошади
+    else if(p == horse)
+    {
+        QVector<std::pair<int, int>> move_horse =
+        {
+           {i + 2, j - 1},
+           {i + 2, j + 1},
+           {i - 2, j - 1},
+           {i - 2, j + 1},
+
+           {i + 1, j - 2},
+           {i + 1, j + 2},
+           {i - 1, j - 2},
+           {i - 1, j + 2},
+        };
+        QVector<std::pair<int, int>>::iterator iter = move_horse.begin();
+        for (; iter != move_horse.end(); iter++)
+        {
+            int newRow = iter->first;
+            int newCol = iter->second;
+            if(newRow < 0 || newRow >=8 || newCol < 0 || newCol >= 8 || (m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() == piece->getColor())) continue;
+            ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, QColor(0, 255, 0, 100));
+            m_scene->addItem(highlight);
+            m_highlightedCells.push_back(highlight);
+            connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
         }
     }
     else return;
@@ -277,6 +293,9 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
 
 // }
 
+// Исправить баг фигурка выбирается по правой кнопки мыши
+// Исправить баг пешки жрут впереди стоящую фигуру
+// Исправить качество изображений
 
 
 
