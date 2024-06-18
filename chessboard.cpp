@@ -288,13 +288,9 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
     else return;
 }
 
-// void ChessBoard::slot_MovePiece(ChessPiece* piece, QPointF position)
-// {
 
-// }
 
 // Исправить баг фигурка выбирается по правой кнопки мыши
-// Исправить баг пешки жрут впереди стоящую фигуру
 // Исправить качество изображений
 
 
