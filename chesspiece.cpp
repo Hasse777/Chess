@@ -52,12 +52,6 @@ unsigned short ChessPiece::getPiece() const
 void ChessPiece::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     emit signal_mousePressEvent(this);
-    QGraphicsPixmapItem::mousePressEvent(event);
+    //QGraphicsPixmapItem::mousePressEvent(event);
 }
 
-// void ChessPiece::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
-// {
-//     m_first_move = false;
-//     emit signal_mouseReleaseEvent(this, event->scenePos());
-//     QGraphicsPixmapItem::mouseReleaseEvent(event);
-// }

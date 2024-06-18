@@ -152,11 +152,18 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
         int direction = piece->getColor() ? -1 : 1;
         int counter_move = (piece->getFirst_Move() == true) ? 2 : 1;
         unsigned short newRow = i;
+
         // Проверка ходов вперед
         for (int counter = 1; counter <= counter_move; counter++)
         {
             newRow -= direction;
-            if(i < m_pieceOnBoard.size() && i >= 0)
+
+            // здесь в будущем нужно добавить превращение пешки в другую фигуру
+            if(newRow >= 8 || newRow < 0) return;
+            //-----------------------------------------------------------------
+
+
+            if(i < 8 && i >= 0)
             {
                 if(m_pieceOnBoard[newRow][j] != nullptr && m_pieceOnBoard[newRow][j]->getColor() != piece->getColor())
                 {
@@ -186,19 +193,18 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
 
         // Проверка ходов по диагонали
         newRow = i - direction;
-        if (newRow >= 0 && newRow < m_pieceOnBoard.size())
+        if (newRow >= 0 && newRow < 8)
         {
             if (j - 1 >= 0 && m_pieceOnBoard[newRow][j - 1] != nullptr && m_pieceOnBoard[newRow][j - 1]->getColor() != piece->getColor())
             {
-                ClickableRect *highlight = new ClickableRect(j * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, QColor(0, 255, 0, 100));
+                ClickableRect *highlight = new ClickableRect((j - 1) * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, QColor(0, 255, 0, 100));
                 m_scene->addItem(highlight);
                 m_highlightedCells.push_back(highlight);
                 connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
-                //connect(highlight, &QGraphicsRectItem::mousePressEvent, this, &ChessBoard::slot_HighlightedCell_Clicked);
             }
-            if (j + 1 < m_pieceOnBoard.size() && m_pieceOnBoard[newRow][j + 1] != nullptr && m_pieceOnBoard[newRow][j + 1]->getColor() != piece->getColor())
+            if (j + 1 < 8 && m_pieceOnBoard[newRow][j + 1] != nullptr && m_pieceOnBoard[newRow][j + 1]->getColor() != piece->getColor())
             {
-                ClickableRect *highlight = new ClickableRect(j * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, QColor(0, 255, 0, 100));
+                ClickableRect *highlight = new ClickableRect((j + 1) * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, QColor(0, 255, 0, 100));
                 m_scene->addItem(highlight);
                 m_highlightedCells.push_back(highlight);
                 connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -220,7 +226,48 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
     if(m_selectedPiece)
     {
 
+        // Получаем текущую позицию выбранной фигуры
+        int oldRow = m_selectedPiece->pos().y() / m_square_Size;
+        int oldCol = m_selectedPiece->pos().x() / m_square_Size;
 
+        // Получаем новую позицию из выделенной клетки
+        int newRow = cell->rect().y() / m_square_Size;
+        int newCol = cell->rect().x() / m_square_Size;
+
+        // Проверка на выход за пределы массива
+        if(newRow >= 8 || newRow < 0 || newCol >= 8 || newCol < 0)
+        {
+            throw std::out_of_range("New position is out of bounds");
+        }
+        if(oldRow >= 8 || oldRow < 0 || oldCol >= 8 || oldCol < 0)
+        {
+            throw std::out_of_range("Old position is out of bounds");
+        }
+        //_____________________________________________________________
+
+        if(m_pieceOnBoard[newRow][newCol] != nullptr)
+        {
+            if(m_pieceOnBoard[newRow][newCol]->getColor() != m_selectedPiece->getColor())
+            {
+                m_scene->removeItem(m_pieceOnBoard[newRow][newCol]);
+                delete m_pieceOnBoard[newRow][newCol];
+            }
+            else
+            {
+                // своих нельзя бить
+            }
+        }
+        //Перемещаем фигуру на новую позицию
+        m_selectedPiece->setPos(cell->rect().topLeft());
+        m_selectedPiece->setFirst_MoveFalse();
+
+        //Обновляем позицию фигуры на доске
+        m_pieceOnBoard[oldRow][oldCol] = nullptr;
+        m_pieceOnBoard[newRow][newCol] = m_selectedPiece;
+
+        // Очищаем выделение клеток
+        clear_highlight();
+        m_selectedPiece = nullptr;
     }
     else return;
 }

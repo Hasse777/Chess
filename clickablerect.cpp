@@ -10,5 +10,5 @@ ClickableRect::ClickableRect(int m_x, int m_y, int squareSize, QColor color, QGr
 void ClickableRect::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     emit ClickableRect::signal_clicked(this);
-    QGraphicsRectItem::mousePressEvent(event);
+    //QGraphicsRectItem::mousePressEvent(event);
 }

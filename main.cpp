@@ -12,6 +12,11 @@ int main(int argc, char *argv[])
         game->show();
         return a.exec();
     }
+    catch (const std::out_of_range& e)
+    {
+        qDebug() << "Exception caught:" << e.what();
+        return EXIT_FAILURE;
+    }
     catch (const std::runtime_error &e)
     {
         qDebug() << "Error " << e.what();
