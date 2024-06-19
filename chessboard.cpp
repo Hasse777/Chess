@@ -74,6 +74,7 @@ void ChessBoard::newGame()
         {
             m_pieceOnBoard[i][j] = new ChessPiece(0, piecePositions[i][j], m_square_Size);
             this->m_scene->addItem(m_pieceOnBoard[i][j]);
+            m_pieceOnBoard[i][j]->setZValue(1);
             m_pieceOnBoard[i][j]->setPos(j * m_square_Size + m_indentation, i  * m_square_Size + m_indentation);
             connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mousePressEvent, this, &ChessBoard::slot_PiecePressed);
         }
@@ -86,10 +87,19 @@ void ChessBoard::newGame()
         {
             m_pieceOnBoard[i][j] = new ChessPiece(1, piecePositions[i][j], m_square_Size);
             this->m_scene->addItem(m_pieceOnBoard[i][j]);
+            m_pieceOnBoard[i][j]->setZValue(1);
             m_pieceOnBoard[i][j]->setPos(j * m_square_Size + m_indentation, i  * m_square_Size + m_indentation);
             connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mousePressEvent, this, &ChessBoard::slot_PiecePressed);
         }
     }
+}
+
+void ChessBoard::create_tempSquare(int x, int y)
+{
+    QGraphicsRectItem *tempSquare = new QGraphicsRectItem(x * m_square_Size + m_indentation, y * m_square_Size + m_indentation, m_square_Size, m_square_Size);
+    tempSquare->setBrush(QBrush(QColor(222, 184, 135)));
+    m_scene->addItem(tempSquare);
+    m_list_tempSquare.append(tempSquare);
 }
 
 
@@ -126,6 +136,8 @@ void ChessBoard::paintEvent(QPaintEvent *event)
 void ChessBoard::highlight_Moves(ChessPiece *piece)
 {
     get_Valid_Moves(piece);
+
+
 }
 
 void ChessBoard::clear_highlight()
@@ -136,6 +148,14 @@ void ChessBoard::clear_highlight()
         delete m_highlightedCells[i];
     }
     m_highlightedCells.clear();
+
+    QVector<QGraphicsRectItem*>::Iterator it = m_list_tempSquare.begin();
+    for(; it != m_list_tempSquare.end(); it++)
+    {
+        this->m_scene->removeItem(*it);
+        delete *it;
+    }
+    m_list_tempSquare.clear();
 }
 
 void ChessBoard::get_Valid_Moves(ChessPiece *piece)
@@ -169,7 +189,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
                 }
                 else
                 {
+                    create_tempSquare(j, newRow);
                     ClickableRect *highlight = new ClickableRect(j * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                    highlight->setZValue(1);
                     m_scene->addItem(highlight);
                     m_highlightedCells.push_back(highlight);
                     connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -187,14 +209,18 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
         {
             if (j - 1 >= 0 && m_pieceOnBoard[newRow][j - 1] != nullptr && m_pieceOnBoard[newRow][j - 1]->getColor() != piece->getColor())
             {
+                create_tempSquare(j - 1, newRow);
                 ClickableRect *highlight = new ClickableRect((j - 1) * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                highlight->setZValue(1);
                 m_scene->addItem(highlight);
                 m_highlightedCells.push_back(highlight);
                 connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
             }
             if (j + 1 < 8 && m_pieceOnBoard[newRow][j + 1] != nullptr && m_pieceOnBoard[newRow][j + 1]->getColor() != piece->getColor())
             {
+                create_tempSquare(j + 1, newRow);
                 ClickableRect *highlight = new ClickableRect((j + 1) * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                highlight->setZValue(1);
                 m_scene->addItem(highlight);
                 m_highlightedCells.push_back(highlight);
                 connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -223,7 +249,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
             int newRow = iter->first;
             int newCol = iter->second;
             if(newRow < 0 || newRow >=8 || newCol < 0 || newCol >= 8 || (m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() == piece->getColor())) continue;
+            create_tempSquare(newCol, newRow);
             ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+            highlight->setZValue(1);
             m_scene->addItem(highlight);
             m_highlightedCells.push_back(highlight);
             connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -249,7 +277,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
             {
                 if(m_pieceOnBoard[newRow][newCol] == nullptr)
                 {
+                    create_tempSquare(newCol, newRow);
                     ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                    highlight->setZValue(1);
                     m_scene->addItem(highlight);
                     m_highlightedCells.push_back(highlight);
                     connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -258,7 +288,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
                 {
                     if(m_pieceOnBoard[newRow][newCol]->getColor() != piece->getColor())
                     {
+                        create_tempSquare(newCol, newRow);
                         ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                        highlight->setZValue(1);
                         m_scene->addItem(highlight);
                         m_highlightedCells.push_back(highlight);
                         connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -295,7 +327,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
             {
                 if(m_pieceOnBoard[newRow][newCol] == nullptr)
                 {
+                    create_tempSquare(newCol, newRow);
                     ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                    highlight->setZValue(1);
                     m_scene->addItem(highlight);
                     m_highlightedCells.push_back(highlight);
                     connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -304,7 +338,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
                 {
                     if(m_pieceOnBoard[newRow][newCol]->getColor() != piece->getColor())
                     {
+                        create_tempSquare(newCol, newRow);
                         ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                        highlight->setZValue(1);
                         m_scene->addItem(highlight);
                         m_highlightedCells.push_back(highlight);
                         connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -339,7 +375,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
             {
                 if(m_pieceOnBoard[newRow][newCol] == nullptr)
                 {
+                    create_tempSquare(newCol, newRow);
                     ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                    highlight->setZValue(1);
                     m_scene->addItem(highlight);
                     m_highlightedCells.push_back(highlight);
                     connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -348,7 +386,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
                 {
                     if(m_pieceOnBoard[newRow][newCol]->getColor() != piece->getColor())
                     {
+                        create_tempSquare(newCol, newRow);
                         ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                        highlight->setZValue(1);
                         m_scene->addItem(highlight);
                         m_highlightedCells.push_back(highlight);
                         connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -386,7 +426,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
             {
                 if(m_pieceOnBoard[newRow][newCol] == nullptr)
                 {
+                    create_tempSquare(newCol, newRow);
                     ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                    highlight->setZValue(1);
                     m_scene->addItem(highlight);
                     m_highlightedCells.push_back(highlight);
                     connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
@@ -395,7 +437,9 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
                 {
                     if(m_pieceOnBoard[newRow][newCol]->getColor() != piece->getColor())
                     {
+                        create_tempSquare(newCol, newRow);
                         ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                        highlight->setZValue(1);
                         m_scene->addItem(highlight);
                         m_highlightedCells.push_back(highlight);
                         connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);

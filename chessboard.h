@@ -19,6 +19,7 @@ public:
 private:
     QGraphicsScene *m_scene;
     QVector<QGraphicsRectItem*> m_vector_square;
+    QVector<QGraphicsRectItem*> m_list_tempSquare;
     QVector<ClickableRect*> m_highlightedCells;
     QVector<QVector<ChessPiece*>> m_pieceOnBoard{8, QVector<ChessPiece*>(8, nullptr)};
     ChessPiece* m_selectedPiece;
@@ -27,6 +28,7 @@ private:
     int m_indentation;
     void paint_Board();
     void newGame();
+    void create_tempSquare(int x, int y);
     void highlight_Moves(ChessPiece* piece);
     void clear_highlight();
     void get_Valid_Moves(ChessPiece* piece);
