@@ -28,15 +28,18 @@ private:
     enum m_piece {none, king, queen, rook, elephant, horse, pawn};
     int m_square_Size;
     int m_indentation;
-    bool m_checkmate_White;
-    bool m_checkmate_Black;
+    bool m_checkShah_White;
+    bool m_checkShah_Black;
+    bool m_whoseMove;
     void paint_Board();
     void newGame();
     void create_tempSquare(int x, int y);
     void highlight_Moves(ChessPiece* piece);
     void clear_highlight();
-    void get_Valid_Moves(ChessPiece* piece);
-    bool Check_King(bool color);
+    void highlighting_possible_moves(ChessPiece* piece);
+    bool Check_King_Shah(bool color);
+    bool Check_King_Mate(bool color);
+    bool square_under_attack(std::pair<int, int> coordinates, bool color);
 protected:
      void paintEvent(QPaintEvent *event) override;
 

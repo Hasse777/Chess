@@ -54,6 +54,8 @@ void ChessBoard::paint_Board()
 void ChessBoard::newGame()
 {
     this->m_selectedPiece = nullptr;
+    m_whoseMove = false; // Сначала ход белых
+
     // Позиции начальных фигур
     unsigned short piecePositions[8][8] =
     {
@@ -70,11 +72,11 @@ void ChessBoard::newGame()
     //Запоминаем начальную позицию белого и черного короля. Нужно для проверки логики "Шах и мат"
     m_whiteKingPos.first = 7;
     m_whiteKingPos.second = 4;
-    m_checkmate_White = false;
+    m_checkShah_White = false;
 
     m_blackKingPos.first = 0;
     m_blackKingPos.second = 4;
-    m_checkmate_Black = false;
+    m_checkShah_Black = false;
 
     // Добавление белых фигур
     for(int i = 7; i > 5; i--)
@@ -144,7 +146,7 @@ void ChessBoard::paintEvent(QPaintEvent *event)
 
 void ChessBoard::highlight_Moves(ChessPiece *piece)
 {
-    get_Valid_Moves(piece);
+    highlighting_possible_moves(piece);
 
 
 }
@@ -167,7 +169,7 @@ void ChessBoard::clear_highlight()
     m_list_tempSquare.clear();
 }
 
-void ChessBoard::get_Valid_Moves(ChessPiece *piece)
+void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
 {
     unsigned short i = piece->pos().y() / m_square_Size;
     unsigned short j = piece->pos().x() / m_square_Size;
@@ -460,123 +462,161 @@ void ChessBoard::get_Valid_Moves(ChessPiece *piece)
     else return;
 }
 
-bool ChessBoard::Check_King(bool color)
+bool ChessBoard::Check_King_Shah(bool color)
+{
+    return color == 0 ? square_under_attack(m_whiteKingPos, 0) : square_under_attack(m_blackKingPos, 1);
+}
+
+bool ChessBoard::Check_King_Mate(bool color)
 {
     int kingRow = color == 0 ? m_whiteKingPos.first : m_blackKingPos.first;
     int kingCol = color == 0 ? m_whiteKingPos.second : m_blackKingPos.second;
+    QVector<std::pair<int, int>> kingMove =
+    {
+        {kingRow + 1, kingCol}, {kingRow + 1, kingCol + 1},
+        {kingRow + 1, kingCol - 1}, {kingRow, kingCol + 1},
+        {kingRow, kingCol - 1}, {kingRow - 1, kingCol},
+        {kingRow - 1, kingCol + 1}, {kingRow - 1, kingCol - 1}
+    };
+    QVector<std::pair<int, int>>::Iterator it = kingMove.begin();
+
+    while (it != kingMove.end())
+    {
+        int newRow = it->first;
+        int newCol = it->second;
+        if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
+        {
+            if((m_pieceOnBoard[newRow][newCol] == nullptr || m_pieceOnBoard[newRow][newCol]->getColor() != color) && square_under_attack({newRow, newCol}, color))
+            {
+                return false; // Есть клетки куда королю можно уйти от атаки
+            }
+        }
+        it++;
+    }
+
+    return true; // Если нет безопасных клеток для короля, то это мат
+}
+
+bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color)
+{
+    int kingRow = coordinates.first;
+    int kingCol = coordinates.second;
     if(kingRow  < 0 || kingRow  >= 8 || kingCol < 0 || kingCol >= 8) throw "Incorrect coordinates passed to king check function";
 
     //Проверка угрозы пешкой
     int direction = color ? -1 : 1;
     if(kingRow - direction < 8 && kingRow - direction >= 0)
-     {
-         QVector<int> pawnMoves = {kingCol + 1, kingCol - 1};
-         QVector<int>::Iterator it = pawnMoves.begin();
-         while (it != pawnMoves.end())
-         {
-             int newRow = kingRow - direction;
-             int newCol = *it;
-             if(newCol < 8 && newCol >= 0)
-             {
-                 if(m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() != color && m_pieceOnBoard[newRow][newCol]->getPiece() == 6)
-                 {
-                     return true;
-                 }
-             }
-             it++;
-         }
-     }
+    {
+        QVector<int> pawnMoves = {kingCol + 1, kingCol - 1};
+        QVector<int>::Iterator it = pawnMoves.begin();
+        while (it != pawnMoves.end())
+        {
+            int newRow = kingRow - direction;
+            int newCol = *it;
+            if(newCol < 8 && newCol >= 0)
+            {
+                if(m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() != color && m_pieceOnBoard[newRow][newCol]->getPiece() == 6)
+                {
+                    return true;
+                }
+            }
+            it++;
+        }
+    }
 
-     //Проверка угрозы конем
-     QVector<std::pair<int, int>> hourseMoves =
-     {
-         {kingRow + 2, kingCol + 1}, {kingRow + 2, kingCol - 1},
-         {kingRow - 2, kingCol + 1}, {kingRow - 2, kingCol - 1},
-         {kingRow + 1, kingCol + 2}, {kingRow + 1, kingCol - 2},
-         {kingRow - 1, kingCol + 2}, {kingRow - 1, kingCol - 2}
-     };
-     QVector<std::pair<int, int>>::Iterator it_hourseMoves = hourseMoves.begin();
-     while (it_hourseMoves != hourseMoves.end())
-     {
-         int newRow = it_hourseMoves->first;
-         int newCol = it_hourseMoves->second;
-         if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
-         {
-             if(m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() != color && m_pieceOnBoard[newRow][newCol]->getPiece() == 5)
-             {
-                 return true;
-             }
-         }
-         it_hourseMoves++;
-     }
+    //Проверка угрозы конем
+    QVector<std::pair<int, int>> hourseMoves =
+        {
+            {kingRow + 2, kingCol + 1}, {kingRow + 2, kingCol - 1},
+            {kingRow - 2, kingCol + 1}, {kingRow - 2, kingCol - 1},
+            {kingRow + 1, kingCol + 2}, {kingRow + 1, kingCol - 2},
+            {kingRow - 1, kingCol + 2}, {kingRow - 1, kingCol - 2}
+        };
+    QVector<std::pair<int, int>>::Iterator it_hourseMoves = hourseMoves.begin();
+    while (it_hourseMoves != hourseMoves.end())
+    {
+        int newRow = it_hourseMoves->first;
+        int newCol = it_hourseMoves->second;
+        if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
+        {
+            if(m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() != color && m_pieceOnBoard[newRow][newCol]->getPiece() == 5)
+            {
+                return true;
+            }
+        }
+        it_hourseMoves++;
+    }
 
 
-     // Проверка угроз по вертикалям, горизонталям и диагоналям
-     QVector<std::pair<int, int>> directions_VH =
-     {
-         {1, 0}, {-1, 0}, {0, 1}, {0, -1},
-         {1, 1}, {-1, -1}, {1, -1}, {-1, 1}
-     };
-     QVector<std::pair<int, int>>::Iterator it_directions = directions_VH.begin();
-     int count = 0;
-     while (it_directions != directions_VH.end())
-     {
-         int newRow = kingRow;
-         int newCol = kingCol;
+    // Проверка угроз по вертикалям, горизонталям и диагоналям
+    QVector<std::pair<int, int>> directions_VH =
+        {
+            {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+            {1, 1}, {-1, -1}, {1, -1}, {-1, 1}
+        };
+    QVector<std::pair<int, int>>::Iterator it_directions = directions_VH.begin();
+    int count = 0;
+    while (it_directions != directions_VH.end())
+    {
+        int newRow = kingRow;
+        int newCol = kingCol;
 
-         while (true)
-         {
-             newRow += it_directions->first;
-             newCol += it_directions->second;
-             if(newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
-             if(m_pieceOnBoard[newRow][newCol] != nullptr)
-             {
-                 ChessPiece* piece = m_pieceOnBoard[newRow][newCol];
-                 if(piece->getColor() != color && count <= 3 && (piece->getPiece() == 3 || piece->getPiece() == 2))
-                 {
-                     return true;
-                 }
-                 if(piece->getColor() != color && count > 3 && (piece->getPiece() == 2 || piece->getPiece() == 4))
-                 {
-                     return true;
-                 }
-                 break;
-             }
-         }
-         count++;
-         it_directions++;
-     }
+        while (true)
+        {
+            newRow += it_directions->first;
+            newCol += it_directions->second;
+            if(newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
+            if(m_pieceOnBoard[newRow][newCol] != nullptr)
+            {
+                ChessPiece* piece = m_pieceOnBoard[newRow][newCol];
+                if(piece->getColor() != color && count <= 3 && (piece->getPiece() == 3 || piece->getPiece() == 2))
+                {
+                    return true;
+                }
+                if(piece->getColor() != color && count > 3 && (piece->getPiece() == 2 || piece->getPiece() == 4))
+                {
+                    return true;
+                }
+                break;
+            }
+        }
+        count++;
+        it_directions++;
+    }
 
-     // Проверка угрозы королём
-     QVector<std::pair<int, int>> kingMoves =
-     {
-        {kingRow + 1, kingCol + 1}, {kingRow + 1, kingCol - 1},
-        {kingRow - 1, kingCol + 1}, {kingRow - 1, kingCol - 1},
-        {kingRow, kingCol + 1},     {kingRow, kingCol - 1},
-        {kingRow + 1, kingCol},     {kingRow - 1, kingCol}
-     };
-     QVector<std::pair<int, int>>::Iterator it_kingMoves = kingMoves.begin();
-     while (it_kingMoves != kingMoves.end())
-     {
-         int newRow = it_kingMoves->first;
-         int newCol = it_kingMoves->second;
-         if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
-         {
-             if(m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() != color && m_pieceOnBoard[newRow][newCol]->getPiece() == 1)
-             {
-                 return true;
-             }
-         }
-         it_kingMoves++;
-     }
-     return false;
+    // Проверка угрозы королём
+    QVector<std::pair<int, int>> kingMoves =
+        {
+            {kingRow + 1, kingCol + 1}, {kingRow + 1, kingCol - 1},
+            {kingRow - 1, kingCol + 1}, {kingRow - 1, kingCol - 1},
+            {kingRow, kingCol + 1},     {kingRow, kingCol - 1},
+            {kingRow + 1, kingCol},     {kingRow - 1, kingCol}
+        };
+    QVector<std::pair<int, int>>::Iterator it_kingMoves = kingMoves.begin();
+    while (it_kingMoves != kingMoves.end())
+    {
+        int newRow = it_kingMoves->first;
+        int newCol = it_kingMoves->second;
+        if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
+        {
+            if(m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() != color && m_pieceOnBoard[newRow][newCol]->getPiece() == 1)
+            {
+                return true;
+            }
+        }
+        it_kingMoves++;
+    }
+    return false;
 }
 
 void ChessBoard::slot_PiecePressed(ChessPiece* piece)
 {
     clear_highlight();
-    highlight_Moves(piece);
-    m_selectedPiece = piece;
+    if(piece->getColor() == m_whoseMove)
+    {
+        highlight_Moves(piece);
+        m_selectedPiece = piece;
+    }
 }
 
 void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
@@ -613,6 +653,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
             else
             {
                 // своих нельзя бить
+                return;
             }
         }
         //Перемещаем фигуру на новую позицию
@@ -643,8 +684,16 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
         clear_highlight();
         m_selectedPiece = nullptr;
 
-        Check_King(false);
-        Check_King(true);
+        bool whiteKingUnderattack = Check_King_Shah(false);
+        bool blackKingUnderattack = Check_King_Shah(true);
+        if((m_whoseMove == 1 && blackKingUnderattack == true) || (m_checkShah_Black == true && blackKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(0))) qDebug() << "White win"; // Если шах поставлен черным и следующий ход белых, то черные проиграли
+        if((m_whoseMove == 0 && whiteKingUnderattack == true) || (m_checkShah_White == true && whiteKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(1))) qDebug() << "Black win"; // Аналогино только черные выйграли
+
+
+
+        m_checkShah_White = whiteKingUnderattack;
+        m_checkShah_Black = blackKingUnderattack;
+        m_whoseMove = !m_whoseMove;
     }
     else return;
 }
