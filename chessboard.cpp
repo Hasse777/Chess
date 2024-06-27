@@ -464,11 +464,16 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
 
 bool ChessBoard::Check_King_Shah(bool color)
 {
-    return color == 0 ? square_under_attack(m_whiteKingPos, 0) : square_under_attack(m_blackKingPos, 1);
+    return color == 0 ? square_under_attack(m_whiteKingPos, 0, true) : square_under_attack(m_blackKingPos, 1, true);
 }
 
 bool ChessBoard::Check_King_Mate(bool color)
 {
+    if(m_piece_Attacking_king.size() == 1 && square_under_attack({m_piece_Attacking_king[0]->pos().x() / m_square_Size, m_piece_Attacking_king[0]->pos().y() / m_square_Size}, m_piece_Attacking_king[0]->getColor()))
+    {
+        return false; // Если фигуру, которая атакует короля, можно уничтожить, то есть выход из под мата
+    }
+
     int kingRow = color == 0 ? m_whiteKingPos.first : m_blackKingPos.first;
     int kingCol = color == 0 ? m_whiteKingPos.second : m_blackKingPos.second;
     QVector<std::pair<int, int>> kingMove =
@@ -486,7 +491,7 @@ bool ChessBoard::Check_King_Mate(bool color)
         int newCol = it->second;
         if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
         {
-            if((m_pieceOnBoard[newRow][newCol] == nullptr || m_pieceOnBoard[newRow][newCol]->getColor() != color) && square_under_attack({newRow, newCol}, color))
+            if((m_pieceOnBoard[newRow][newCol] == nullptr || m_pieceOnBoard[newRow][newCol]->getColor() != color) && !square_under_attack({newRow, newCol}, color))
             {
                 return false; // Есть клетки куда королю можно уйти от атаки
             }
@@ -497,7 +502,7 @@ bool ChessBoard::Check_King_Mate(bool color)
     return true; // Если нет безопасных клеток для короля, то это мат
 }
 
-bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color)
+bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color, bool mod)
 {
     int kingRow = coordinates.first;
     int kingCol = coordinates.second;
@@ -517,6 +522,7 @@ bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color
             {
                 if(m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() != color && m_pieceOnBoard[newRow][newCol]->getPiece() == 6)
                 {
+                    if(mod == true) m_piece_Attacking_king.push_back(m_pieceOnBoard[newRow][newCol]);
                     return true;
                 }
             }
@@ -541,6 +547,7 @@ bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color
         {
             if(m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() != color && m_pieceOnBoard[newRow][newCol]->getPiece() == 5)
             {
+                if(mod == true) m_piece_Attacking_king.push_back(m_pieceOnBoard[newRow][newCol]);
                 return true;
             }
         }
@@ -571,10 +578,12 @@ bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color
                 ChessPiece* piece = m_pieceOnBoard[newRow][newCol];
                 if(piece->getColor() != color && count <= 3 && (piece->getPiece() == 3 || piece->getPiece() == 2))
                 {
+                    if(mod == true) m_piece_Attacking_king.push_back(m_pieceOnBoard[newRow][newCol]);
                     return true;
                 }
                 if(piece->getColor() != color && count > 3 && (piece->getPiece() == 2 || piece->getPiece() == 4))
                 {
+                    if(mod == true) m_piece_Attacking_king.push_back(m_pieceOnBoard[newRow][newCol]);
                     return true;
                 }
                 break;
@@ -686,13 +695,14 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
 
         bool whiteKingUnderattack = Check_King_Shah(false);
         bool blackKingUnderattack = Check_King_Shah(true);
-        if((m_whoseMove == 1 && blackKingUnderattack == true) || (m_checkShah_Black == true && blackKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(0))) qDebug() << "White win"; // Если шах поставлен черным и следующий ход белых, то черные проиграли
-        if((m_whoseMove == 0 && whiteKingUnderattack == true) || (m_checkShah_White == true && whiteKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(1))) qDebug() << "Black win"; // Аналогино только черные выйграли
+        if((m_whoseMove == 1 && blackKingUnderattack == true) || (m_checkShah_Black == true && blackKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(0))) qDebug() << "White win"; // Если шах поставлен черным и следующий ход белых, то черные проиграли
+        if((m_whoseMove == 0 && whiteKingUnderattack == true) || (m_checkShah_White == true && whiteKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(1))) qDebug() << "Black win"; // Аналогино только черные выйграли
 
 
 
         m_checkShah_White = whiteKingUnderattack;
         m_checkShah_Black = blackKingUnderattack;
+        m_piece_Attacking_king.clear();
         m_whoseMove = !m_whoseMove;
     }
     else return;

@@ -22,6 +22,7 @@ private:
     QVector<QGraphicsRectItem*> m_list_tempSquare;
     QVector<ClickableRect*> m_highlightedCells;
     QVector<QVector<ChessPiece*>> m_pieceOnBoard{8, QVector<ChessPiece*>(8, nullptr)};
+    QVector<ChessPiece*> m_piece_Attacking_king;
     ChessPiece* m_selectedPiece;
     std::pair<int, int> m_whiteKingPos;
     std::pair<int, int> m_blackKingPos;
@@ -39,7 +40,7 @@ private:
     void highlighting_possible_moves(ChessPiece* piece);
     bool Check_King_Shah(bool color);
     bool Check_King_Mate(bool color);
-    bool square_under_attack(std::pair<int, int> coordinates, bool color);
+    bool square_under_attack(std::pair<int, int> coordinates, bool color, bool mod = 0);
 protected:
      void paintEvent(QPaintEvent *event) override;
 
