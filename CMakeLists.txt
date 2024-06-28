@@ -20,6 +20,8 @@ add_executable(Chess
   figures.qrc
   chesspiece.h chesspiece.cpp
   clickablerect.h clickablerect.cpp
+  playerwidget.h playerwidget.cpp
+  moveswidget.h moveswidget.cpp
 )
 
 target_link_libraries(Chess PRIVATE Qt6::Widgets)

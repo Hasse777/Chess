@@ -704,6 +704,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
         m_checkShah_Black = blackKingUnderattack;
         m_piece_Attacking_king.clear();
         m_whoseMove = !m_whoseMove;
+        emit signal_Change_picture(m_whoseMove);
     }
     else return;
 }
