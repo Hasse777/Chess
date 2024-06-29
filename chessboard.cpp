@@ -54,7 +54,10 @@ void ChessBoard::paint_Board()
 void ChessBoard::newGame()
 {
     this->m_selectedPiece = nullptr;
+    m_counterMoves = 0;
     m_whoseMove = false; // Сначала ход белых
+    m_whiteCastling_check = false; // Рокировки еще не было
+    m_blackCastling_check = false;
 
     // Позиции начальных фигур
     unsigned short piecePositions[8][8] =
@@ -416,7 +419,7 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
     // Проверка для короля
     else if(p == king)
     {
-        QVector<std::pair<int, int>> move_queen =
+        QVector<std::pair<int, int>> move_king =
             {
 
                 {i, j + 1},
@@ -428,8 +431,8 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
                 {i - 1, j + 1},
                 {i - 1, j - 1}
             };
-        QVector<std::pair<int, int>>::Iterator it = move_queen.begin();
-        for(; it != move_queen.end(); it++)
+        QVector<std::pair<int, int>>::Iterator it = move_king.begin();
+        for(; it != move_king.end(); it++)
         {
             int newRow = it->first;
             int newCol = it->second;
@@ -458,8 +461,78 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
                 }
             }
         }
+        if((piece->getColor() == false && m_whiteCastling_check == false) || (piece->getColor() == true && m_whiteCastling_check == false))
+        {
+            if(castling_check(0, piece))
+            {
+                int newRow = piece->getColor() == 0 ? 7 : 0;
+                int newCol = 0;
+                create_tempSquare(newCol, newRow);
+                ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                highlight->setZValue(1);
+                m_scene->addItem(highlight);
+                m_highlightedCells.push_back(highlight);
+                connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
+            }
+            if(castling_check(1, piece))
+            {
+                int newRow = piece->getColor() == 0 ? 7 : 0;
+                int newCol = 7;
+                create_tempSquare(newCol, newRow);
+                ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                highlight->setZValue(1);
+                m_scene->addItem(highlight);
+                m_highlightedCells.push_back(highlight);
+                connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
+            }
+        }
     }
     else return;
+}
+
+void ChessBoard::addMovesForWidget(ChessPiece *piece, int oldRow, int oldCol, int newRow, int newCol)
+{
+    QString piece_color = piece->getColor() == 0 ? "White" : "Black";
+    QString piece_type;
+    QString text;
+
+    switch (piece->getPiece())
+    {
+    case 1: piece_type = "King"; break;
+    case 2: piece_type = "Queen"; break;
+    case 3: piece_type = "Rook"; break;
+    case 4: piece_type = "Elephant"; break;
+    case 5: piece_type = "Horse"; break;
+    case 6: piece_type = "Pawn"; break;
+    default:
+        break;
+    }
+    text = QString("%1) %2 %3 moves from %4%5 to %6%7")
+    .arg(QString::number(m_counterMoves), piece_color, piece_type, QChar('a' + oldCol), QString::number(8 - oldRow), QChar('a' + newCol), QString::number(8 - newRow));
+    emit signal_addMove(text);
+}
+
+bool ChessBoard::castling_check(bool short_or_long, ChessPiece *piece)
+{
+    // Проверяем делал ли король ход и находится ли он под шахом
+    if(!piece->getFirst_Move() || (piece->getColor() == false && m_checkShah_White == true) || ((piece->getColor() == true && m_checkShah_Black == true)))    return false;
+    int row = piece->pos().y() / m_square_Size;
+    int col = piece->pos().x() / m_square_Size;
+    int direction = short_or_long == 0 ? -1 : 1; // Направление движения
+    int count = -1;
+    // Проверяем корректность коордиант
+    if(row < 0 || row >= 8 || col < 0 || col >= 8) throw "castling_check() - incorrect coordinates row and col";
+    while (1)
+    {
+        count++;
+        col += direction;
+        if(col == 0 || col == 7)
+        {
+            if(m_pieceOnBoard[row][col] == nullptr || m_pieceOnBoard[row][col]->getFirst_Move() == false) return false;
+            return true;
+        }
+        if(m_pieceOnBoard[row][col] != nullptr || (count < 2 && square_under_attack({row, col}, piece->getColor()))) return false;
+    }
 }
 
 bool ChessBoard::Check_King_Shah(bool color)
@@ -621,11 +694,12 @@ bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color
 void ChessBoard::slot_PiecePressed(ChessPiece* piece)
 {
     clear_highlight();
-    if(piece->getColor() == m_whoseMove)
+    if(1)
     {
         highlight_Moves(piece);
         m_selectedPiece = piece;
     }
+    //piece->getColor() == m_whoseMove
 }
 
 void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
@@ -651,6 +725,13 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
             throw std::out_of_range("Old position is out of bounds");
         }
         //_____________________________________________________________
+
+        // Проверка рокировки доделать
+        if(m_selectedPiece->getPiece() == 1 && m_selectedPiece->getFirst_Move())
+        {
+
+        }
+
 
         if(m_pieceOnBoard[newRow][newCol] != nullptr)
         {
@@ -691,10 +772,9 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
 
         // Очищаем выделение клеток
         clear_highlight();
-        m_selectedPiece = nullptr;
 
-        bool whiteKingUnderattack = Check_King_Shah(false);
-        bool blackKingUnderattack = Check_King_Shah(true);
+        bool whiteKingUnderattack = Check_King_Shah(false); // проверяем нахоидтся ли белый король под атакой
+        bool blackKingUnderattack = Check_King_Shah(true); // проверяем нахоидтся ли черный король под атакой
         if((m_whoseMove == 1 && blackKingUnderattack == true) || (m_checkShah_Black == true && blackKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(0))) qDebug() << "White win"; // Если шах поставлен черным и следующий ход белых, то черные проиграли
         if((m_whoseMove == 0 && whiteKingUnderattack == true) || (m_checkShah_White == true && whiteKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(1))) qDebug() << "Black win"; // Аналогино только черные выйграли
 
@@ -705,6 +785,9 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
         m_piece_Attacking_king.clear();
         m_whoseMove = !m_whoseMove;
         emit signal_Change_picture(m_whoseMove);
+        m_counterMoves++;
+        addMovesForWidget(m_selectedPiece, oldRow, oldCol, newRow, newCol);
+        m_selectedPiece = nullptr;
     }
     else return;
 }

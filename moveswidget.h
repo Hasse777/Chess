@@ -1,11 +1,16 @@
 #ifndef MOVESWIDGET_H
 #define MOVESWIDGET_H
-#include <QLabel>
+#include <QTextEdit>
 
-class MovesWidget : public QLabel
+class MovesWidget : public QTextEdit
 {
+private:
+
 public:
-    MovesWidget(QWidget* parrent = nullptr);
+    MovesWidget(QWidget* parent = nullptr);
+
+public slots:
+    void slot_addText(const QString text);
 };
 
 #endif // MOVESWIDGET_H

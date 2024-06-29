@@ -13,8 +13,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_playerWidget = new PlayerWidget(m_central_widget);
     m_moveWidget = new MovesWidget(m_central_widget);
 
-    // Подключаем сигнал от шахматной доски к виджету игрока
+    // Подключаем сигналы от шахматной доски к виджетам
     connect(m_chessBoard, &ChessBoard::signal_Change_picture, m_playerWidget, &PlayerWidget::change_picture);
+    connect(m_chessBoard, &ChessBoard::signal_addMove, m_moveWidget, &MovesWidget::slot_addText);
 
     // Создаем макет и добавляем виджеты
     m_gridLayout = new QGridLayout(m_central_widget);

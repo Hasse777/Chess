@@ -13,7 +13,7 @@ private:
     QLabel* m_label_picture;
     QHBoxLayout* m_layout;
 public:
-    PlayerWidget(QWidget* parrent = nullptr);
+    PlayerWidget(QWidget* parent = nullptr);
 public slots:
     void change_picture(bool color);
 };

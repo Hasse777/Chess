@@ -1,7 +1,7 @@
 #include "playerwidget.h"
 
 
-PlayerWidget::PlayerWidget(QWidget* parrent) : QWidget{parrent}
+PlayerWidget::PlayerWidget(QWidget* parent) : QWidget{parent}
 {
     setFixedSize(250, 160);
     m_layout = new QHBoxLayout(this);
