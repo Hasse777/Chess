@@ -54,10 +54,8 @@ void ChessBoard::paint_Board()
 void ChessBoard::newGame()
 {
     this->m_selectedPiece = nullptr;
-    m_counterMoves = 0;
+    m_counterMoves = 1;
     m_whoseMove = false; // Сначала ход белых
-    m_whiteCastling_check = false; // Рокировки еще не было
-    m_blackCastling_check = false;
 
     // Позиции начальных фигур
     unsigned short piecePositions[8][8] =
@@ -461,30 +459,27 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
                 }
             }
         }
-        if((piece->getColor() == false && m_whiteCastling_check == false) || (piece->getColor() == true && m_whiteCastling_check == false))
+        if(castling_check(0, piece))
         {
-            if(castling_check(0, piece))
-            {
-                int newRow = piece->getColor() == 0 ? 7 : 0;
-                int newCol = 0;
-                create_tempSquare(newCol, newRow);
-                ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
-                highlight->setZValue(1);
-                m_scene->addItem(highlight);
-                m_highlightedCells.push_back(highlight);
-                connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
-            }
-            if(castling_check(1, piece))
-            {
-                int newRow = piece->getColor() == 0 ? 7 : 0;
-                int newCol = 7;
-                create_tempSquare(newCol, newRow);
-                ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
-                highlight->setZValue(1);
-                m_scene->addItem(highlight);
-                m_highlightedCells.push_back(highlight);
-                connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
-            }
+            int newRow = piece->getColor() == 0 ? 7 : 0;
+            int newCol = 0;
+            create_tempSquare(newCol, newRow);
+            ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+            highlight->setZValue(1);
+            m_scene->addItem(highlight);
+            m_highlightedCells.push_back(highlight);
+            connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
+        }
+        if(castling_check(1, piece))
+        {
+            int newRow = piece->getColor() == 0 ? 7 : 0;
+            int newCol = 7;
+            create_tempSquare(newCol, newRow);
+            ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+            highlight->setZValue(1);
+            m_scene->addItem(highlight);
+            m_highlightedCells.push_back(highlight);
+            connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
         }
     }
     else return;
@@ -508,7 +503,7 @@ void ChessBoard::addMovesForWidget(ChessPiece *piece, int oldRow, int oldCol, in
         break;
     }
     text = QString("%1) %2 %3 moves from %4%5 to %6%7")
-    .arg(QString::number(m_counterMoves), piece_color, piece_type, QChar('a' + oldCol), QString::number(8 - oldRow), QChar('a' + newCol), QString::number(8 - newRow));
+    .arg(QString::number(m_counterMoves++), piece_color, piece_type, QChar('a' + oldCol), QString::number(8 - oldRow), QChar('a' + newCol), QString::number(8 - newRow));
     emit signal_addMove(text);
 }
 
@@ -542,13 +537,9 @@ bool ChessBoard::Check_King_Shah(bool color)
 
 bool ChessBoard::Check_King_Mate(bool color)
 {
-    if(m_piece_Attacking_king.size() == 1 && square_under_attack({m_piece_Attacking_king[0]->pos().x() / m_square_Size, m_piece_Attacking_king[0]->pos().y() / m_square_Size}, m_piece_Attacking_king[0]->getColor()))
-    {
-        return false; // Если фигуру, которая атакует короля, можно уничтожить, то есть выход из под мата
-    }
-
     int kingRow = color == 0 ? m_whiteKingPos.first : m_blackKingPos.first;
     int kingCol = color == 0 ? m_whiteKingPos.second : m_blackKingPos.second;
+
     QVector<std::pair<int, int>> kingMove =
     {
         {kingRow + 1, kingCol}, {kingRow + 1, kingCol + 1},
@@ -557,6 +548,7 @@ bool ChessBoard::Check_King_Mate(bool color)
         {kingRow - 1, kingCol + 1}, {kingRow - 1, kingCol - 1}
     };
     QVector<std::pair<int, int>>::Iterator it = kingMove.begin();
+
 
     while (it != kingMove.end())
     {
@@ -572,6 +564,12 @@ bool ChessBoard::Check_King_Mate(bool color)
         it++;
     }
 
+    if(m_piece_Attacking_king.size() == 1)
+    {
+        int attackPieceRow = m_piece_Attacking_king[0]->pos().y() / m_square_Size;
+        int attackPieceCol = m_piece_Attacking_king[0]->pos().x() / m_square_Size;
+        return !square_under_attack({attackPieceRow, attackPieceCol}, m_piece_Attacking_king[0]->getColor()); // Если фигуру, которая атакует короля, можно уничтожить, то есть выход из под мата
+    }
     return true; // Если нет безопасных клеток для короля, то это мат
 }
 
@@ -726,68 +724,101 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
         }
         //_____________________________________________________________
 
-        // Проверка рокировки доделать
-        if(m_selectedPiece->getPiece() == 1 && m_selectedPiece->getFirst_Move())
+        // Проверка рокировки
+        // Если король ходит первый раз и для него подсвечены такие столбцы как 0 и 7, то нам не нужны проверки на валидность тк они выполняются в функции подсветки возможных ходов
+        if(m_selectedPiece->getPiece() == 1 && m_selectedPiece->getFirst_Move() && (newCol == 0 || newCol == 7))
         {
+            int oldColRook = newCol == 7 ? 7 : 0;
+            int newColRook = newCol == 7 ? 5 : 3;
+            int colKing = newCol == 7 ? 6 : 2;
+            //Перемещаем короля
+            m_selectedPiece->setPos(QRect(colKing * m_square_Size + m_indentation, oldRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
+            m_selectedPiece->setFirst_MoveFalse();
+            m_pieceOnBoard[oldRow][oldCol] = nullptr;
+            m_pieceOnBoard[oldRow][colKing] = m_selectedPiece;
 
-        }
+            //Перемещаем ладью
+            m_pieceOnBoard[oldRow][oldColRook]->setPos(QRect(newColRook * m_square_Size + m_indentation, oldRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
+            m_pieceOnBoard[oldRow][oldColRook]->setFirst_MoveFalse();
+            m_pieceOnBoard[oldRow][newColRook] = m_pieceOnBoard[oldRow][oldColRook];
+            m_pieceOnBoard[oldRow][oldColRook] = nullptr;
 
+            //Вызываем метод, который сформирует текст для виджета, который отображает все ходы
+            addMovesForWidget(m_selectedPiece, oldRow, oldCol, oldRow, colKing);
+            m_counterMoves--;
+            addMovesForWidget(m_pieceOnBoard[oldRow][newColRook], oldRow, oldColRook, oldRow, newColRook);
 
-        if(m_pieceOnBoard[newRow][newCol] != nullptr)
-        {
-            if(m_pieceOnBoard[newRow][newCol]->getColor() != m_selectedPiece->getColor())
-            {
-                m_scene->removeItem(m_pieceOnBoard[newRow][newCol]);
-                delete m_pieceOnBoard[newRow][newCol];
-            }
-            else
-            {
-                // своих нельзя бить
-                return;
-            }
-        }
-        //Перемещаем фигуру на новую позицию
-        m_selectedPiece->setPos(cell->rect().topLeft());
-        m_selectedPiece->setFirst_MoveFalse();
-
-
-        //Обновляем позицию фигуры на доске
-        m_pieceOnBoard[oldRow][oldCol] = nullptr;
-        m_pieceOnBoard[newRow][newCol] = m_selectedPiece;
-
-        //Если походили королем, то обновляем координаты
-        if(m_selectedPiece->getPiece() == 1)
-        {
+            //Обновляем позицию короля
             if(m_selectedPiece->getColor() == 0)
             {
-                m_whiteKingPos.first = newRow;
-                m_whiteKingPos.second = newCol;
+                m_whiteKingPos.first = oldRow;
+                m_whiteKingPos.second = colKing;
             }
             else
             {
-                m_blackKingPos.first = newRow;
-                m_blackKingPos.second = newCol;
+                m_blackKingPos.first = oldRow;
+                m_blackKingPos.second = colKing;
             }
         }
+        //Если это не рокировка
+        else
+        {
+            if(m_pieceOnBoard[newRow][newCol] != nullptr)
+            {
+                if(m_pieceOnBoard[newRow][newCol]->getColor() != m_selectedPiece->getColor())
+                {
+                    m_scene->removeItem(m_pieceOnBoard[newRow][newCol]);
+                    delete m_pieceOnBoard[newRow][newCol];
+                }
+                else
+                {
+                    // своих нельзя бить
+                    return;
+                }
+            }
+            //Перемещаем фигуру на новую позицию
+            m_selectedPiece->setPos(cell->rect().topLeft());
+            m_selectedPiece->setFirst_MoveFalse();
 
-        // Очищаем выделение клеток
-        clear_highlight();
 
-        bool whiteKingUnderattack = Check_King_Shah(false); // проверяем нахоидтся ли белый король под атакой
-        bool blackKingUnderattack = Check_King_Shah(true); // проверяем нахоидтся ли черный король под атакой
-        if((m_whoseMove == 1 && blackKingUnderattack == true) || (m_checkShah_Black == true && blackKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(0))) qDebug() << "White win"; // Если шах поставлен черным и следующий ход белых, то черные проиграли
-        if((m_whoseMove == 0 && whiteKingUnderattack == true) || (m_checkShah_White == true && whiteKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(1))) qDebug() << "Black win"; // Аналогино только черные выйграли
+            //Обновляем позицию фигуры на доске
+            m_pieceOnBoard[oldRow][oldCol] = nullptr;
+            m_pieceOnBoard[newRow][newCol] = m_selectedPiece;
+
+            //Если походили королем, то обновляем координаты
+            if(m_selectedPiece->getPiece() == 1)
+            {
+                if(m_selectedPiece->getColor() == 0)
+                {
+                    m_whiteKingPos.first = newRow;
+                    m_whiteKingPos.second = newCol;
+                }
+                else
+                {
+                    m_blackKingPos.first = newRow;
+                    m_blackKingPos.second = newCol;
+                }
+            }
+            addMovesForWidget(m_selectedPiece, oldRow, oldCol, newRow, newCol);
+        }
+        //------------------------------------------------------------------------------------------------------------------------
+
+         // Очищаем выделение клеток
+         clear_highlight();
+
+         bool whiteKingUnderattack = Check_King_Shah(false); // проверяем нахоидтся ли белый король под атакой
+         bool blackKingUnderattack = Check_King_Shah(true); // проверяем нахоидтся ли черный король под атакой
+         if((m_whoseMove == 1 && blackKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(1))) qDebug() << "White win"; // Если шах поставлен черным и следующий ход белых, то черные проиграли
+         if((m_whoseMove == 0 && whiteKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(0))) qDebug() << "Black win"; // Аналогино только черные выйграли
 
 
 
-        m_checkShah_White = whiteKingUnderattack;
-        m_checkShah_Black = blackKingUnderattack;
-        m_piece_Attacking_king.clear();
-        m_whoseMove = !m_whoseMove;
-        emit signal_Change_picture(m_whoseMove);
-        m_counterMoves++;
-        addMovesForWidget(m_selectedPiece, oldRow, oldCol, newRow, newCol);
-        m_selectedPiece = nullptr;
+         m_checkShah_White = whiteKingUnderattack;
+         m_checkShah_Black = blackKingUnderattack;
+         m_piece_Attacking_king.clear();
+         m_whoseMove = !m_whoseMove;
+         emit signal_Change_picture(m_whoseMove);
+         m_selectedPiece = nullptr;
     }
     else return;
 }

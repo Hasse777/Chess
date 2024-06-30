@@ -33,8 +33,6 @@ private:
     bool m_checkShah_White; // шах белым
     bool m_checkShah_Black; // шах черным
     bool m_whoseMove; // Переменная для того чтобы узнать чей сейчас ход
-    bool m_whiteCastling_check; // переменные, которые позволяют узнать была ли рокировка или нет
-    bool m_blackCastling_check;
     void paint_Board();
     void newGame();
     void create_tempSquare(int x, int y);
