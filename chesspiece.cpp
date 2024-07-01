@@ -22,11 +22,13 @@ ChessPiece::ChessPiece(bool color, unsigned short piece, const int squareSize) :
     QString piecePath = QString(":/figures_img/%1_%2.png").arg(colorStr, pieceName);
 
     QPixmap pixmap(piecePath);
-    if (pixmap.isNull()) {
+    if (pixmap.isNull())
+    {
         throw std::runtime_error(QString("Failed to load image: %1").arg(piecePath).toStdString());
     }
-    QPixmap scaledPixmap = pixmap.scaled(squareSize, squareSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    setPixmap(scaledPixmap);
+
+    //QPixmap scaledPixmap = pixmap.scaled(squareSize, squareSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    setPixmap(pixmap);
 }
 
 bool ChessPiece::getColor() const

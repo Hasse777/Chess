@@ -24,8 +24,10 @@ private:
     QVector<QVector<ChessPiece*>> m_pieceOnBoard{8, QVector<ChessPiece*>(8, nullptr)}; // Все фигуры на доске
     QVector<ChessPiece*> m_piece_Attacking_king; // Массив указателей для того чтобы знать какие фигуры атакуют короля
     ChessPiece* m_selectedPiece; // Указатель на шахматную фигуру, которая ходит на выделеную клетку
+    ChessPiece* m_pawnPiece;     // Указатель на шахматную фигуру, которую можно взять на проходе
     std::pair<int, int> m_whiteKingPos; // Храним позиции обоих королей
     std::pair<int, int> m_blackKingPos;
+    std::pair<int, int> m_pawnPos; // Храним координаты клетки, через которую прошла пешка, которую можно взять на проходе
     enum m_piece {none, king, queen, rook, elephant, horse, pawn}; // Перечисление всех фигур
     int m_square_Size; // Размер шахматной клетки
     int m_indentation; // Отсуп чтобы освободить пространство для подписи клеток a-h,1-8

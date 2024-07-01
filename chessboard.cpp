@@ -56,6 +56,7 @@ void ChessBoard::newGame()
     this->m_selectedPiece = nullptr;
     m_counterMoves = 1;
     m_whoseMove = false; // Сначала ход белых
+    m_pawnPiece = nullptr; // Обнуляем указатель на пешку, которую можно взять на проходе
 
     // Позиции начальных фигур
     unsigned short piecePositions[8][8] =
@@ -219,7 +220,7 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
         newRow = i - direction;
         if (newRow >= 0 && newRow < 8)
         {
-            if (j - 1 >= 0 && m_pieceOnBoard[newRow][j - 1] != nullptr && m_pieceOnBoard[newRow][j - 1]->getColor() != piece->getColor())
+            if ((j - 1 >= 0 && m_pieceOnBoard[newRow][j - 1] != nullptr && m_pieceOnBoard[newRow][j - 1]->getColor() != piece->getColor()))
             {
                 create_tempSquare(j - 1, newRow);
                 ClickableRect *highlight = new ClickableRect((j - 1) * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
@@ -232,6 +233,22 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
             {
                 create_tempSquare(j + 1, newRow);
                 ClickableRect *highlight = new ClickableRect((j + 1) * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
+                highlight->setZValue(1);
+                m_scene->addItem(highlight);
+                m_highlightedCells.push_back(highlight);
+                connect(highlight, &ClickableRect::signal_clicked, this, &ChessBoard::slot_HighlightedCell_Clicked);
+            }
+            //if(m_pawnPiece != nullptr) qDebug() << m_pawnPos.second << j - 1 << j + 1;
+
+            if(m_pawnPiece != nullptr && m_pawnPiece->getColor() != piece->getColor() && (((j - 1 == m_pawnPos.second) || (j + 1  == m_pawnPos.second)) && newRow == m_pawnPos.first))
+            {
+                // Добавление прозрачной картинки пешки
+
+
+
+                // Добавление подсветки клетки
+                create_tempSquare(m_pawnPos.second, newRow);
+                ClickableRect *highlight = new ClickableRect((m_pawnPos.second) * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
                 highlight->setZValue(1);
                 m_scene->addItem(highlight);
                 m_highlightedCells.push_back(highlight);
@@ -704,7 +721,6 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
 {
     if(m_selectedPiece)
     {
-
         // Получаем текущую позицию выбранной фигуры
         int oldRow = m_selectedPiece->pos().y() / m_square_Size;
         int oldCol = m_selectedPiece->pos().x() / m_square_Size;
@@ -769,6 +785,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
                 {
                     m_scene->removeItem(m_pieceOnBoard[newRow][newCol]);
                     delete m_pieceOnBoard[newRow][newCol];
+                    m_pieceOnBoard[newRow][newCol] = nullptr;
                 }
                 else
                 {
@@ -776,9 +793,20 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
                     return;
                 }
             }
+            else
+            {
+                if(m_selectedPiece->getPiece() == 6 && m_pawnPiece != nullptr && m_pawnPos.first == newRow && m_pawnPos.second == newCol)
+                {
+                    int pawnRow = m_pawnPiece->pos().y() / m_square_Size;
+                    int pawnCol = m_pawnPiece->pos().x() / m_square_Size;
+                    m_scene->removeItem(m_pawnPiece);
+                    delete  m_pawnPiece;
+                    m_pawnPiece = nullptr;
+                    m_pieceOnBoard[pawnRow][pawnCol] = nullptr;
+                }
+            }
             //Перемещаем фигуру на новую позицию
             m_selectedPiece->setPos(cell->rect().topLeft());
-            m_selectedPiece->setFirst_MoveFalse();
 
 
             //Обновляем позицию фигуры на доске
@@ -811,6 +839,17 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
          if((m_whoseMove == 1 && blackKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(1))) qDebug() << "White win"; // Если шах поставлен черным и следующий ход белых, то черные проиграли
          if((m_whoseMove == 0 && whiteKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(0))) qDebug() << "Black win"; // Аналогино только черные выйграли
 
+         // Обнуляем указатель на пешку после одного хода
+          m_pawnPiece = nullptr;
+         //-----------------------------------------------------------------------------------------------------
+         // Если это пешка, которую можно взять на проходе, то нужно обновить указатель и координаты на один ход
+         if(m_selectedPiece->getPiece() == 6 && m_selectedPiece->getFirst_Move() && qMax(newRow,oldRow) - qMin(newRow,oldRow) == 2)
+         {
+             int direction =  m_selectedPiece->getColor() == 0 ? -1 : 1;
+             m_pawnPiece = m_selectedPiece;
+             m_pawnPos = {oldRow + direction, oldCol};
+         }
+         //-----------------------------------------------------------------------------------------------------
 
 
          m_checkShah_White = whiteKingUnderattack;
@@ -818,7 +857,10 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
          m_piece_Attacking_king.clear();
          m_whoseMove = !m_whoseMove;
          emit signal_Change_picture(m_whoseMove);
+         m_selectedPiece->setFirst_MoveFalse();
          m_selectedPiece = nullptr;
+
+
     }
     else return;
 }
