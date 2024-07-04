@@ -57,3 +57,31 @@ void ChessPiece::mousePressEvent(QGraphicsSceneMouseEvent *event)
     //QGraphicsPixmapItem::mousePressEvent(event);
 }
 
+void ChessPiece::slots_PieceSelection(int pieceType)
+{
+    QString colorStr = m_color ? "Black" : "White";
+    QString pieceName;
+    m_piece = pieceType;
+
+    switch(m_piece)
+    {
+    case 1 : pieceName = "king"; break;
+    case 2 : pieceName = "queen"; break;
+    case 3 : pieceName = "rook"; break;
+    case 4 : pieceName = "elephant"; break;
+    case 5 : pieceName = "horse"; break;
+    case 6 : pieceName = "pawn"; break;
+    default: return;
+    }
+    QString piecePath = QString(":/figures_img/%1_%2.png").arg(colorStr, pieceName);
+
+    QPixmap pixmap(piecePath);
+    if (pixmap.isNull())
+    {
+        throw std::runtime_error(QString("Failed to load image: %1").arg(piecePath).toStdString());
+    }
+
+    //QPixmap scaledPixmap = pixmap.scaled(squareSize, squareSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    setPixmap(pixmap);
+}
+

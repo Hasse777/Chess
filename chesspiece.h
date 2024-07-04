@@ -23,6 +23,8 @@ protected:
 signals:
     void signal_mousePressEvent(ChessPiece* piece);
     void signal_mouseReleaseEvent(ChessPiece* piece, QPointF position);
+public slots:
+    void slots_PieceSelection(int pieceType);
 };
 
 #endif // CHESSPIECE_H

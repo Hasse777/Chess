@@ -1,5 +1,6 @@
 #include "chessboard.h"
 #include <QDebug>
+#include "pawnselection.h"
 
 
 ChessBoard::ChessBoard(QWidget *parent)
@@ -858,12 +859,45 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
          m_whoseMove = !m_whoseMove;
          emit signal_Change_picture(m_whoseMove);
          m_selectedPiece->setFirst_MoveFalse();
+
+
+         // Если пешка дошла до конца доски, то нужно вызвать диалоговое окно выбора фигуры
+         if(m_selectedPiece->getPiece() == 6)
+         {
+             if(m_selectedPiece->getColor() == false && newRow == 0)
+             {
+                 PawnSelection* selectionPawn = new PawnSelection(false);
+                 connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
+                 selectionPawn->exec();
+                 disconnect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
+                 delete selectionPawn;
+             }
+             else if(m_selectedPiece->getColor() == true && newRow == 7)
+             {
+                 PawnSelection* selectionPawn = new PawnSelection(true);
+                 connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
+                 selectionPawn->exec();
+                 disconnect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
+                 delete selectionPawn;
+             }
+             else;
+         }
          m_selectedPiece = nullptr;
-
-
     }
     else return;
 }
+
+// void ChessBoard::slot_PawnSelection(int pieceType)
+// {
+//     switch (pieceType)
+//     {
+//     case 2:
+
+//         break;
+//     default:
+//         break;
+//     }
+// }
 
 
 

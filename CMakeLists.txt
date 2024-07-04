@@ -22,6 +22,7 @@ add_executable(Chess
   clickablerect.h clickablerect.cpp
   playerwidget.h playerwidget.cpp
   moveswidget.h moveswidget.cpp
+  pawnselection.h pawnselection.cpp
 )
 
 target_link_libraries(Chess PRIVATE Qt6::Widgets)
