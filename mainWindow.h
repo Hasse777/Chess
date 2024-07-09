@@ -5,6 +5,7 @@
 #include "chessboard.h"
 #include "playerwidget.h"
 #include "moveswidget.h"
+#include "eatenpieces.h"
 
 
 class MainWindow : public QMainWindow
@@ -15,6 +16,7 @@ private:
     ChessBoard* m_chessBoard;
     PlayerWidget* m_playerWidget;
     MovesWidget* m_moveWidget;
+    EatenPieces* m_eatenPieces;
 public:
     explicit MainWindow(QWidget* parent = nullptr);
 };

@@ -4,7 +4,7 @@ MovesWidget::MovesWidget(QWidget* parent) : QTextEdit(parent)
 {
     setFixedSize(350, 595);
     setAlignment(Qt::AlignTop);
-    setStyleSheet("border: 2px solid black;");
+    setStyleSheet("border: 3px solid black;");
 
     //Устанавливаем курсор в начало
     QTextCursor cursor = textCursor();

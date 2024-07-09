@@ -19,6 +19,11 @@ ChessBoard::ChessBoard(QWidget *parent)
     this->newGame();
 }
 
+int ChessBoard::get_square_Size() const
+{
+    return m_square_Size;
+}
+
 ChessBoard::~ChessBoard()
 {
     for(int i = 0; i < this->m_vector_square.size(); i++)
@@ -784,6 +789,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
             {
                 if(m_pieceOnBoard[newRow][newCol]->getColor() != m_selectedPiece->getColor())
                 {
+                    emit signal_addEatenImages(m_pieceOnBoard[newRow][newCol]->pixmap());
                     m_scene->removeItem(m_pieceOnBoard[newRow][newCol]);
                     delete m_pieceOnBoard[newRow][newCol];
                     m_pieceOnBoard[newRow][newCol] = nullptr;
@@ -796,10 +802,12 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
             }
             else
             {
+                // Если пешку берут на проходе
                 if(m_selectedPiece->getPiece() == 6 && m_pawnPiece != nullptr && m_pawnPos.first == newRow && m_pawnPos.second == newCol)
                 {
                     int pawnRow = m_pawnPiece->pos().y() / m_square_Size;
                     int pawnCol = m_pawnPiece->pos().x() / m_square_Size;
+                    emit signal_addEatenImages(m_pieceOnBoard[pawnRow][pawnCol]->pixmap());
                     m_scene->removeItem(m_pawnPiece);
                     delete  m_pawnPiece;
                     m_pawnPiece = nullptr;
@@ -866,7 +874,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
          {
              if(m_selectedPiece->getColor() == false && newRow == 0)
              {
-                 PawnSelection* selectionPawn = new PawnSelection(false);
+                 PawnSelection* selectionPawn = new PawnSelection(false, this);
                  connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
                  selectionPawn->exec();
                  disconnect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
@@ -874,7 +882,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
              }
              else if(m_selectedPiece->getColor() == true && newRow == 7)
              {
-                 PawnSelection* selectionPawn = new PawnSelection(true);
+                 PawnSelection* selectionPawn = new PawnSelection(true, this);
                  connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
                  selectionPawn->exec();
                  disconnect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);

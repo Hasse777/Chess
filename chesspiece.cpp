@@ -1,4 +1,5 @@
 #include "chesspiece.h"
+#include <QMessageBox>
 
 
 
@@ -24,7 +25,7 @@ ChessPiece::ChessPiece(bool color, unsigned short piece, const int squareSize) :
     QPixmap pixmap(piecePath);
     if (pixmap.isNull())
     {
-        throw std::runtime_error(QString("Failed to load image: %1").arg(piecePath).toStdString());
+        QMessageBox::critical(nullptr, "Error", "Error loading image of figure in class \"ChessPiece\"");
     }
 
     //QPixmap scaledPixmap = pixmap.scaled(squareSize, squareSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);

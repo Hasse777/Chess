@@ -6,10 +6,10 @@ PlayerWidget::PlayerWidget(QWidget* parent) : QWidget{parent}
     setFixedSize(250, 160);
     m_layout = new QHBoxLayout(this);
 
-    QPixmap picture(":/figures_img/White_king.png");
+    QPixmap picture(":/figures_img/White_kingMove.png");
     m_whiteKingPixmap = picture.scaled(130, 160, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-    picture.load(":/figures_img/Black_king.png");
+    picture.load(":/figures_img/Black_kingMove.png");
     m_blackKingPixmap = picture.scaled(130, 160, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     m_label_text = new QLabel("Move white:" ,this);

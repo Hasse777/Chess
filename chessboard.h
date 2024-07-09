@@ -15,6 +15,7 @@ class ChessBoard : public QGraphicsView
     Q_OBJECT
 public:
     explicit ChessBoard(QWidget *parent = nullptr);
+    int get_square_Size() const;
     ~ChessBoard();
 private:
     QGraphicsScene *m_scene;
@@ -57,6 +58,7 @@ private slots:
  signals:
      void signal_Change_picture(bool color);
      void signal_addMove(const QString text);
+     void signal_addEatenImages(const QPixmap);
 };
 
 #endif // CHESSBOARD_H
