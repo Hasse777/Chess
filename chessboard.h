@@ -36,8 +36,10 @@ private:
     bool m_checkShah_White; // шах белым
     bool m_checkShah_Black; // шах черным
     bool m_whoseMove; // Переменная для того чтобы узнать чей сейчас ход
-    void paint_Board();
-    void newGame();
+    void paint_Board(); // Рисование шахматной доски
+    void newGame(); // Новая игра
+    void endGame(bool colorWin); // Обработка выйгрыша-пройгрыша. colorWin: 0 - Белые выйграли, 1 - Черные выйграли
+    void ClearMemoryforNewGame(); // Очистка памяти для новой игры
     void create_tempSquare(int x, int y);
     void highlight_Moves(ChessPiece* piece);
     void clear_highlight();
