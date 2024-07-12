@@ -39,11 +39,22 @@ void EatenPieces::slot_addImage(const QPixmap img)
         // Добавляем картинку в виджет и убираем его из списка
         // QList был выбран потому что сложность вставки и удаление элемента из начало и конца списка O(1)
         m_list_label.first()->setPixmap(img);
+        m_list_img.push_front(m_list_label.first()); // Добавляем виджет с картинкой для того чтобы удалять картинку при новой игре
         m_list_label.pop_front();
     }
     else
     {
         // Если что-то пошло не так, пишем сообщение в терминал
         QMessageBox::critical(this, "Error", "Vector of eaten figures is overflowing");
+    }
+}
+
+void EatenPieces::slot_clearImage()
+{
+    while (!m_list_img.empty())
+    {
+        m_list_img.first()->setPixmap(QPixmap());
+        m_list_label.push_front(m_list_img.first());
+        m_list_img.pop_front();
     }
 }

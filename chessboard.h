@@ -56,11 +56,11 @@ protected:
 private slots:
      void slot_PiecePressed(ChessPiece* piece);
      void slot_HighlightedCell_Clicked(QGraphicsRectItem* cell);
-     //void slot_MovePiece(ChessPiece* piece, QPointF position);
  signals:
      void signal_Change_picture(bool color);
      void signal_addMove(const QString text);
      void signal_addEatenImages(const QPixmap);
+     void signal_newGame();
 };
 
 #endif // CHESSBOARD_H

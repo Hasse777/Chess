@@ -1,9 +1,10 @@
 #include "chessboard.h"
 #include <QDebug>
 #include "pawnselection.h"
+#include "dialogendgame.h"
 
 
-#define testEndGame
+//#define testEndGame
 
 ChessBoard::ChessBoard(QWidget *parent)
     : QGraphicsView{parent}, m_pieceOnBoard{8, QVector<ChessPiece*>(8, nullptr)},
@@ -74,10 +75,13 @@ void ChessBoard::clear_highlight()
 void ChessBoard::newGame()
 {
     ClearMemoryforNewGame();
+    emit signal_newGame();
     m_selectedPiece = nullptr; // Обнуляем указатель на фигуру, которая ходит
     m_pawnPiece = nullptr; // Обнуляем указатель на пешку, которую можно взять на проходе
     m_counterMoves = 1;
     m_whoseMove = false; // Сначала ход белых
+
+    emit signal_Change_picture(m_whoseMove);
 
     // Позиции начальных фигур
     unsigned short piecePositions[8][8] =
@@ -137,6 +141,10 @@ void ChessBoard::endGame(bool colorWin)
         qDebug() << "White win";
         #else
 
+        DialogEndGame* d = new DialogEndGame(0, this);
+        d->exec();
+        delete d;
+
         #endif
         newGame();
     }
@@ -145,6 +153,10 @@ void ChessBoard::endGame(bool colorWin)
         #ifdef testEndGame
         qDebug() << "Black win";
         #else
+
+        DialogEndGame* d = new DialogEndGame(1, this);
+        d->exec();
+        delete d;
 
         #endif
         newGame();
