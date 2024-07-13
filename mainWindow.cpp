@@ -1,8 +1,9 @@
 #include "mainWindow.h"
-
+#include "mainmenudialog.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
+    setStyleSheet("background-color: #F5F5DC;");
     // Устанавливаем центральный виджет
     setWindowState(Qt::WindowMaximized);
     m_central_widget = new QWidget(this);
@@ -20,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(m_chessBoard, &ChessBoard::signal_newGame, m_moveWidget, &MovesWidget::slot_clearText);
     connect(m_chessBoard, &ChessBoard::signal_addEatenImages, m_eatenPieces, &EatenPieces::slot_addImage);
     connect(m_chessBoard, &ChessBoard::signal_newGame, m_eatenPieces, &EatenPieces::slot_clearImage);
+    connect(this, &MainWindow::signal_newGame, m_chessBoard, &ChessBoard::slot_newGame);
 
     // Создаем макет и добавляем виджеты
     m_gridLayout = new QGridLayout(m_central_widget);
@@ -33,4 +35,22 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // Устанавливаем макет на центральный виджет
     m_central_widget->setLayout(m_gridLayout);
+}
+
+void MainWindow::newGame()
+{
+
+    emit signal_newGame();
+}
+
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if(event->key() == Qt::Key_Escape)
+    {
+        MainMenuDialog* d = new MainMenuDialog(this);
+        connect(d, &MainMenuDialog::signal_newGame, m_chessBoard, &ChessBoard::slot_newGame);
+        d->exec();
+        delete d;
+    }
 }

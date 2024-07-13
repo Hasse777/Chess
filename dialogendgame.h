@@ -2,7 +2,7 @@
 #define DIALOGENDGAME_H
 
 #include <QDialog>
-#include "QObject"
+
 
 class DialogEndGame : public QDialog
 {

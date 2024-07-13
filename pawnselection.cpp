@@ -3,6 +3,7 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include <QLabel>
+#include <QApplication>
 
 PawnSelection::PawnSelection(bool color, QWidget* parent) : QDialog{parent}, color{color}
 {
@@ -52,7 +53,7 @@ PawnSelection::PawnSelection(bool color, QWidget* parent) : QDialog{parent}, col
     if(queenIcon.isNull() || rookIcon.isNull() || elephantIcon.isNull() || horseIcon.isNull())
     {
         QMessageBox::critical(this, "Error", "Error inserting a picture in pawn selection");
-        reject();
+        QApplication::quit();
     }
 
     // Устанавливаем иконки и размер иконок для кнопок

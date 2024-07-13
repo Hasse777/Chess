@@ -25,6 +25,8 @@ add_executable(Chess
   pawnselection.h pawnselection.cpp
   eatenpieces.h eatenpieces.cpp
   dialogendgame.h dialogendgame.cpp
+  mainmenudialog.h mainmenudialog.cpp
+  sideselectiondialog.h sideselectiondialog.cpp
 )
 
 target_link_libraries(Chess PRIVATE Qt6::Widgets)

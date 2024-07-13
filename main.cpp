@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
     {
         MainWindow *game = new MainWindow();
         game->show();
+        game->newGame();
         return a.exec();
     }
     catch (const std::out_of_range& e)

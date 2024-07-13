@@ -36,6 +36,7 @@ private:
     bool m_checkShah_White; // шах белым
     bool m_checkShah_Black; // шах черным
     bool m_whoseMove; // Переменная для того чтобы узнать чей сейчас ход
+    bool m_playerColor; // За кого будет играть игрок
     void paint_Board(); // Рисование шахматной доски
     void newGame(); // Новая игра
     void endGame(bool colorWin); // Обработка выйгрыша-пройгрыша. colorWin: 0 - Белые выйграли, 1 - Черные выйграли
@@ -49,6 +50,7 @@ private:
     bool Check_King_Shah(bool color);
     bool Check_King_Mate(bool color);
     bool square_under_attack(std::pair<int, int> coordinates, bool color, bool mod = 0); // Функция проверяет находится ли клетка под атакой.
+    void arrangement_piece(bool playerColor); // функция расстановки фигур на шахматной доске
     //Mod нужен для того чтобы знать проверяем ли мы урозу короля, если проверяем, то нужно запоминать угрожающие королю фигуры
 protected:
      void paintEvent(QPaintEvent *event) override;
@@ -56,6 +58,9 @@ protected:
 private slots:
      void slot_PiecePressed(ChessPiece* piece);
      void slot_HighlightedCell_Clicked(QGraphicsRectItem* cell);
+     void slot_PlayerColor(bool color);
+ public slots:
+     void slot_newGame();
  signals:
      void signal_Change_picture(bool color);
      void signal_addMove(const QString text);
