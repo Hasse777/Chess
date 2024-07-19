@@ -36,8 +36,8 @@ MainMenuDialog::MainMenuDialog(QWidget *parent) : QDialog{parent}
 
 void MainMenuDialog::slot_newGame()
 {
-    emit signal_newGame();
     reject();
+    emit signal_newGame();
 }
 
 void MainMenuDialog::slot_exit()

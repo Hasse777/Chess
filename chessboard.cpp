@@ -3,6 +3,7 @@
 #include "pawnselection.h"
 #include "dialogendgame.h"
 #include "sideselectiondialog.h"
+#include "artificial_intelligence.h"
 
 
 //#define testEndGame
@@ -20,6 +21,7 @@ ChessBoard::ChessBoard(QWidget *parent)
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->paint_Board();
     this->setScene(this->m_scene);
+    m_bot = nullptr;
     //this->newGame();
 }
 
@@ -33,6 +35,7 @@ ChessBoard::~ChessBoard()
     ClearMemoryforNewGame();
     clear_highlight();
     delete m_scene;
+    delete m_bot;
 }
 
 void ChessBoard::ClearMemoryforNewGame()
@@ -135,9 +138,17 @@ void ChessBoard::arrangement_piece(bool playerColor)
     }
 }
 
+const QVector<QVector<ChessPiece *> >&ChessBoard::getPieceOnBoard() const
+{
+    return m_pieceOnBoard;
+}
+
+
+
 
 void ChessBoard::newGame()
 {
+    clear_highlight();
     ClearMemoryforNewGame();
     emit signal_newGame();
     m_selectedPiece = nullptr; // Обнуляем указатель на фигуру, которая ходит
@@ -159,6 +170,10 @@ void ChessBoard::newGame()
     {
         delete d;
         arrangement_piece(m_playerColor);
+
+        if(m_bot != nullptr) delete m_bot;
+        m_bot = new Artificial_Intelligence(this, !m_playerColor); // Создаем бота, передаём ему текущий обьект доски для корректной работы
+        // и сторону, за которую бот будет играть
     }
 }
 
@@ -190,6 +205,8 @@ void ChessBoard::endGame(bool colorWin)
         #endif
         newGame();
     }
+    delete m_bot;
+    m_bot = nullptr;
 }
 
 void ChessBoard::paint_Board()
@@ -300,9 +317,9 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
                 break;
             }
         }
-
         // Проверка ходов по диагонали
         newRow = i - direction;
+        //qDebug() << newRow;
         if (newRow >= 0 && newRow < 8)
         {
             if ((j - 1 >= 0 && m_pieceOnBoard[newRow][j - 1] != nullptr && m_pieceOnBoard[newRow][j - 1]->getColor() != piece->getColor()))
@@ -329,7 +346,7 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
 
             if(m_pawnPiece != nullptr && m_pawnPiece->getColor() != piece->getColor() && (((j - 1 == m_pawnPos.second) || (j + 1  == m_pawnPos.second)) && newRow == m_pawnPos.first))
             {
-                // Добавление прозрачной картинки пешки
+
 
 
 
@@ -565,7 +582,8 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
         }
         if(castling_check(0, piece))
         {
-            int newRow = piece->getColor() == 0 ? 7 : 0;
+            //int newRow = piece->getColor() == 0 ? 7 : 0;
+            int newRow = m_playerColor == 0 ? (piece->getColor() == 0 ? 7 : 0) : (piece->getColor() == 0 ? 0 : 7);
             int newCol = 0;
             create_tempSquare(newCol, newRow);
             ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
@@ -576,7 +594,7 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
         }
         if(castling_check(1, piece))
         {
-            int newRow = piece->getColor() == 0 ? 7 : 0;
+            int newRow = m_playerColor == 0 ? (piece->getColor() == 0 ? 7 : 0) : (piece->getColor() == 0 ? 0 : 7);
             int newCol = 7;
             create_tempSquare(newCol, newRow);
             ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
@@ -959,9 +977,10 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
              // Если это пешка, которую можно взять на проходе, то нужно обновить указатель и координаты на один ход
              if(m_selectedPiece->getPiece() == 6 && m_selectedPiece->getFirst_Move() && qMax(newRow,oldRow) - qMin(newRow,oldRow) == 2)
              {
-                 int direction =  m_selectedPiece->getColor() == 0 ? -1 : 1;
+                 int direction =  (m_playerColor == 0 ? (m_selectedPiece->getColor() ? -1 : 1) : (m_selectedPiece->getColor() ? 1 : -1));
+                 //int direction = (m_playerColor == 0 ? (piece->getColor() ? -1 : 1) : (piece->getColor() ? 1 : -1));
                  m_pawnPiece = m_selectedPiece;
-                 m_pawnPos = {oldRow + direction, oldCol};
+                 m_pawnPos = {oldRow - direction, oldCol};
              }
              //-----------------------------------------------------------------------------------------------------
 
@@ -977,7 +996,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
              // Если пешка дошла до конца доски, то нужно вызвать диалоговое окно выбора фигуры
              if(m_selectedPiece->getPiece() == 6)
              {
-                 if(m_selectedPiece->getColor() == false && newRow == 0)
+                 if((m_playerColor == 0 && m_selectedPiece->getColor() == false && newRow == 0) || (m_playerColor == 1 && m_selectedPiece->getColor() == false && newRow ==7))
                  {
                      PawnSelection* selectionPawn = new PawnSelection(false, this);
                      connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
@@ -985,7 +1004,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
                      disconnect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
                      delete selectionPawn;
                  }
-                 else if(m_selectedPiece->getColor() == true && newRow == 7)
+                 else if((m_playerColor == 0 && m_selectedPiece->getColor() == true && newRow == 7) || (m_playerColor == 1  && m_selectedPiece->getColor() == true && newRow == 0))
                  {
                      PawnSelection* selectionPawn = new PawnSelection(true, this);
                      connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
