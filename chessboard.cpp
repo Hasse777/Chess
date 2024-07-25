@@ -557,7 +557,7 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
             int newCol = it->second;
             if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
             {
-                if(m_pieceOnBoard[newRow][newCol] == nullptr)
+                if(m_pieceOnBoard[newRow][newCol] == nullptr && square_under_attack({newRow, newCol}, piece->getColor()) == false)
                 {
                     create_tempSquare(newCol, newRow);
                     ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
@@ -568,7 +568,7 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
                 }
                 else
                 {
-                    if(m_pieceOnBoard[newRow][newCol]->getColor() != piece->getColor())
+                    if(m_pieceOnBoard[newRow][newCol] != nullptr && m_pieceOnBoard[newRow][newCol]->getColor() != piece->getColor() && square_under_attack({newRow, newCol}, piece->getColor()) == false)
                     {
                         create_tempSquare(newCol, newRow);
                         ClickableRect *highlight = new ClickableRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, backlight_color);
@@ -690,19 +690,40 @@ bool ChessBoard::Check_King_Mate(bool color)
     {
         int attackPieceRow = m_piece_Attacking_king[0]->pos().y() / m_square_Size;
         int attackPieceCol = m_piece_Attacking_king[0]->pos().x() / m_square_Size;
-        return !square_under_attack({attackPieceRow, attackPieceCol}, m_piece_Attacking_king[0]->getColor()); // Если фигуру, которая атакует короля, можно уничтожить, то есть выход из под мата
+        if(square_under_attack({attackPieceRow, attackPieceCol}, m_piece_Attacking_king[0]->getColor()))
+        {
+            return false; // Если фигуру, которая атакует короля, можно уничтожить, то есть выход из под мата
+        }
     }
+    else if(m_piece_Attacking_king.size() > 1)
+    {
+        return true; // Если фигур, атакующих короля, больше 2 то это мат
+    }
+
+    // Проверка есть ли фигура которая может перекрыть короля
+    QVector<std::pair<int, int>> *arr = (color == 0 ? &m_whiteSquareCover : &m_blackSquareCover);
+    for(int i = 0; i < arr->size(); i++)
+    {
+        int row = (*arr)[i].first;
+        int col = (*arr)[i].second;
+        if(square_under_attack({row, col}, !color))
+        {
+            return false;
+        }
+    }
+
     return true; // Если нет безопасных клеток для короля, то это мат
 }
+
+
 
 bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color, bool mod)
 {
     int kingRow = coordinates.first;
     int kingCol = coordinates.second;
     if(kingRow  < 0 || kingRow  >= 8 || kingCol < 0 || kingCol >= 8) throw "Incorrect coordinates passed to king check function";
-
     //Проверка угрозы пешкой
-    int direction = color ? -1 : 1;
+    int direction = (m_playerColor == 0 ? (color ? -1 : 1) : (color ? 1 : -1));
     if(kingRow - direction < 8 && kingRow - direction >= 0)
     {
         QVector<int> pawnMoves = {kingCol + 1, kingCol - 1};
@@ -755,6 +776,7 @@ bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color
             {1, 1}, {-1, -1}, {1, -1}, {-1, 1}
         };
     QVector<std::pair<int, int>>::Iterator it_directions = directions_VH.begin();
+    QVector<std::pair<int, int>> *arr = (color == 0 ? &m_whiteSquareCover : &m_blackSquareCover);
     int count = 0;
     while (it_directions != directions_VH.end())
     {
@@ -765,6 +787,7 @@ bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color
         {
             newRow += it_directions->first;
             newCol += it_directions->second;
+            // которые ведут к королю
             if(newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) break;
             if(m_pieceOnBoard[newRow][newCol] != nullptr)
             {
@@ -779,12 +802,15 @@ bool ChessBoard::square_under_attack(std::pair<int, int> coordinates, bool color
                     if(mod == true) m_piece_Attacking_king.push_back(m_pieceOnBoard[newRow][newCol]);
                     return true;
                 }
+                if(mod == true) arr->clear();
                 break;
             }
+            if(mod == true) arr->push_front({newRow, newCol}); // если происходит проверка угрозы королю, то нужно запомнить клетки
         }
         count++;
         it_directions++;
     }
+    if(mod == true) arr->clear();
 
     // Проверка угрозы королём
     QVector<std::pair<int, int>> kingMoves =
@@ -1031,5 +1057,8 @@ void ChessBoard::slot_newGame()
 }
 
 
-
+// Баг если короля можно закрыть, то все равно происходит мат
+// Баг если играть за черных белыми мат пешкой не ставится ++
+// Баг если играть за черных, король может пролетать через битое поле, которое находится под атакой белой пешкой ++
+// Реализовать функцию чтобы король не мог ходить на битое поле ++
 

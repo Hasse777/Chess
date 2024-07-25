@@ -30,6 +30,8 @@ private:
     QVector<ClickableRect*> m_highlightedCells; // Все подсвеченные клетки на которые возможно походить
     QVector<QVector<ChessPiece*>> m_pieceOnBoard{8, QVector<ChessPiece*>(8, nullptr)}; // Все фигуры на доске
     QVector<ChessPiece*> m_piece_Attacking_king; // Массив указателей для того чтобы знать какие фигуры атакуют короля
+    QVector<std::pair<int, int>> m_whiteSquareCover; // Клетки которые ведут к белому королю, если их можно перекрыть, то мат королю не будет поставлен
+    QVector<std::pair<int, int>> m_blackSquareCover; // Клетки которые ведут к белому королю, если их можно перекрыть, то мат королю не будет поставлен
     ChessPiece* m_selectedPiece; // Указатель на шахматную фигуру, которая ходит на выделеную клетку
     ChessPiece* m_pawnPiece;     // Указатель на шахматную фигуру, которую можно взять на проходе
     std::pair<int, int> m_whiteKingPos; // Храним позиции обоих королей
@@ -54,10 +56,12 @@ private:
     void addMovesForWidget(ChessPiece *piece, int oldRow, int oldCol, int newRow, int newCol);
     bool castling_check(bool short_or_long, ChessPiece *piece); // Проверка возможности рокировки, короткая 0, длинная 1 и указатель на фигурку короля
     bool Check_King_Shah(bool color);
-    bool Check_King_Mate(bool color); 
+    bool Check_King_Mate(bool color);
+    //bool kingOverlap(bool color);
     bool square_under_attack(std::pair<int, int> coordinates, bool color, bool mod = 0); // Функция проверяет находится ли клетка под атакой.
-    void arrangement_piece(bool playerColor); // функция расстановки фигур на шахматной доске
     //Mod нужен для того чтобы знать проверяем ли мы урозу короля, если проверяем, то нужно запоминать угрожающие королю фигуры
+    void arrangement_piece(bool playerColor); // функция расстановки фигур на шахматной доске
+
     const QVector<QVector<ChessPiece*>>& getPieceOnBoard() const;
 protected:
      void paintEvent(QPaintEvent *event) override;
