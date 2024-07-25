@@ -1041,6 +1041,8 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
                  else;
              }
              m_selectedPiece = nullptr;
+             m_whiteSquareCover.clear();
+             m_blackSquareCover.clear();
          }
     }
     else return;
