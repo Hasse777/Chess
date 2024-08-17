@@ -60,6 +60,7 @@ private:
     //bool kingOverlap(bool color);
     bool square_under_attack(std::pair<int, int> coordinates, bool color, bool mod = 0); // Функция проверяет находится ли клетка под атакой.
     //Mod нужен для того чтобы знать проверяем ли мы урозу короля, если проверяем, то нужно запоминать угрожающие королю фигуры
+    // color цвет атакуемой фигуры
     void arrangement_piece(bool playerColor); // функция расстановки фигур на шахматной доске
 
     const QVector<QVector<ChessPiece*>>& getPieceOnBoard() const;
@@ -69,6 +70,7 @@ protected:
 private slots:
      void slot_PiecePressed(ChessPiece* piece);
      void slot_HighlightedCell_Clicked(QGraphicsRectItem* cell);
+     void slot_MoveBot(ChessPiece *piece, std::pair<int, int> coordinates);
      void slot_PlayerColor(bool color);
  public slots:
      void slot_newGame();
@@ -77,6 +79,7 @@ private slots:
      void signal_addMove(const QString text);
      void signal_addEatenImages(const QPixmap);
      void signal_newGame();
+     void signal_MoveBots();
 };
 
 #endif // CHESSBOARD_H

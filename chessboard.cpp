@@ -174,6 +174,13 @@ void ChessBoard::newGame()
         if(m_bot != nullptr) delete m_bot;
         m_bot = new Artificial_Intelligence(this, !m_playerColor); // Создаем бота, передаём ему текущий обьект доски для корректной работы
         // и сторону, за которую бот будет играть
+        connect(this, &ChessBoard::signal_MoveBots, m_bot, &Artificial_Intelligence::slot_MoveBot, Qt::QueuedConnection);
+        connect(m_bot, &Artificial_Intelligence::signal_BotChoseMove, this, &ChessBoard::slot_MoveBot);
+        // Если сейчас ход не игрока, то отправляем сигнал боту
+        if(m_playerColor != m_whoseMove)
+        {
+            emit signal_MoveBots();
+        }
     }
 }
 
@@ -205,8 +212,6 @@ void ChessBoard::endGame(bool colorWin)
         #endif
         newGame();
     }
-    delete m_bot;
-    m_bot = nullptr;
 }
 
 void ChessBoard::paint_Board()
@@ -985,13 +990,17 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
 
          bool whiteKingUnderattack = Check_King_Shah(false); // проверяем нахоидтся ли белый король под атакой
          bool blackKingUnderattack = Check_King_Shah(true); // проверяем нахоидтся ли черный король под атакой
+          //qDebug() << ((m_whoseMove == 0 && whiteKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(0)) || (m_whoseMove == 1 && blackKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(1)));
+         //qDebug() << (blackKingUnderattack == true);
          if((m_whoseMove == 1 && blackKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(1)))
          {
+             //qDebug() << "end";
              endGame(0); // Если шах поставлен черным и следующий ход белых, то черные проиграли
              return;
          }
          else if((m_whoseMove == 0 && whiteKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(0)))
          {
+             //qDebug() << "end";
              endGame(1); // Аналогино только черные выйграли
              return;
          }
@@ -1025,17 +1034,17 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
                  if((m_playerColor == 0 && m_selectedPiece->getColor() == false && newRow == 0) || (m_playerColor == 1 && m_selectedPiece->getColor() == false && newRow ==7))
                  {
                      PawnSelection* selectionPawn = new PawnSelection(false, this);
-                     connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
+                     connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slot_PieceSelection);
                      selectionPawn->exec();
-                     disconnect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
+                     disconnect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slot_PieceSelection);
                      delete selectionPawn;
                  }
                  else if((m_playerColor == 0 && m_selectedPiece->getColor() == true && newRow == 7) || (m_playerColor == 1  && m_selectedPiece->getColor() == true && newRow == 0))
                  {
                      PawnSelection* selectionPawn = new PawnSelection(true, this);
-                     connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
+                     connect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slot_PieceSelection);
                      selectionPawn->exec();
-                     disconnect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slots_PieceSelection);
+                     disconnect(selectionPawn, &PawnSelection::signals_pieceSelected, m_selectedPiece, &ChessPiece::slot_PieceSelection);
                      delete selectionPawn;
                  }
                  else;
@@ -1043,9 +1052,143 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
              m_selectedPiece = nullptr;
              m_whiteSquareCover.clear();
              m_blackSquareCover.clear();
+
+             emit signal_MoveBots();
          }
     }
     else return;
+}
+
+void ChessBoard::slot_MoveBot(ChessPiece *piece, std::pair<int, int> coordinates)
+{
+    if(piece != nullptr)
+    {
+        emit signal_Change_picture(!m_whoseMove);
+        int oldRow = piece->pos().y() / m_square_Size;
+        int oldCol = piece->pos().x() / m_square_Size;
+
+        int newRow = coordinates.first;
+        int newCol = coordinates.second;
+
+        // Проверка на выход за пределы массива
+        if(newRow >= 8 || newRow < 0 || newCol >= 8 || newCol < 0)
+        {
+            throw std::out_of_range("New position is out of bounds");
+        }
+        if(oldRow >= 8 || oldRow < 0 || oldCol >= 8 || oldCol < 0)
+        {
+            throw std::out_of_range("Old position is out of bounds");
+        }
+
+
+        if(m_pieceOnBoard[newRow][newCol] != nullptr)
+        {
+            if(m_pieceOnBoard[newRow][newCol]->getPiece() == 1)
+            {
+                bool color = !m_pieceOnBoard[newRow][newCol]->getColor();
+                emit signal_addEatenImages(m_pieceOnBoard[newRow][newCol]->pixmap());
+                m_scene->removeItem(m_pieceOnBoard[newRow][newCol]);
+                m_pieceOnBoard[newRow][newCol] = nullptr;
+                piece->setPos(QRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
+                endGame(color);
+                return;
+            }
+            emit signal_addEatenImages(m_pieceOnBoard[newRow][newCol]->pixmap());
+            m_scene->removeItem(m_pieceOnBoard[newRow][newCol]);
+            delete m_pieceOnBoard[newRow][newCol];
+            m_pieceOnBoard[newRow][newCol] = nullptr;
+        }
+        else
+        {
+            //Нужно проверить взятие ли это на проходе
+            if(piece->getPiece() == 6 && m_pawnPiece != nullptr && m_pawnPos.first == newRow && m_pawnPos.second == newCol)
+            {
+                int pawnRow = m_pawnPiece->pos().y() / m_square_Size;
+                int pawnCol = m_pawnPiece->pos().x() / m_square_Size;
+                emit signal_addEatenImages(m_pieceOnBoard[pawnRow][pawnCol]->pixmap());
+                m_scene->removeItem(m_pawnPiece);
+                delete  m_pawnPiece;
+                m_pawnPiece = nullptr;
+                m_pieceOnBoard[pawnRow][pawnCol] = nullptr;
+            }
+
+        }
+        piece->setPos(QRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
+
+        //Обновляем позицию фигуры на доске
+        m_pieceOnBoard[oldRow][oldCol] = nullptr;
+        m_pieceOnBoard[newRow][newCol] = piece;
+
+        //Если походили королем, то обновляем координаты
+        if(piece->getPiece() == 1)
+        {
+            if(piece->getColor() == 0)
+            {
+                m_whiteKingPos.first = newRow;
+                m_whiteKingPos.second = newCol;
+            }
+            else
+            {
+                m_blackKingPos.first = newRow;
+                m_blackKingPos.second = newCol;
+            }
+        }
+        addMovesForWidget(piece, oldRow, oldCol, newRow, newCol);
+
+        bool whiteKingUnderattack = Check_King_Shah(false); // проверяем нахоидтся ли белый король под атакой
+        bool blackKingUnderattack = Check_King_Shah(true); // проверяем нахоидтся ли черный король под атакой
+        if((m_whoseMove == 1 && blackKingUnderattack == true) || (blackKingUnderattack == true && Check_King_Mate(1)))
+        {
+            endGame(0); // Если шах поставлен черным и следующий ход белых, то черные проиграли
+            return;
+        }
+        else if((m_whoseMove == 0 && whiteKingUnderattack == true) || (whiteKingUnderattack == true && Check_King_Mate(0)))
+        {
+            endGame(1); // Аналогино только черные выйграли
+            return;
+        }
+        else
+        {
+            // Обнуляем указатель на пешку после одного хода
+            m_pawnPiece = nullptr;
+            //-----------------------------------------------------------------------------------------------------
+            // Если это пешка, которую можно взять на проходе, то нужно обновить указатель и координаты на один ход
+            if(piece->getPiece() == 6 && piece->getFirst_Move() && qMax(newRow,oldRow) - qMin(newRow,oldRow) == 2)
+            {
+                int direction =  (m_playerColor == 0 ? (piece->getColor() ? -1 : 1) : (piece->getColor() ? 1 : -1));
+                //int direction = (m_playerColor == 0 ? (piece->getColor() ? -1 : 1) : (piece->getColor() ? 1 : -1));
+                m_pawnPiece = piece;
+                m_pawnPos = {oldRow - direction, oldCol};
+            }
+            //-----------------------------------------------------------------------------------------------------
+
+
+            m_checkShah_White = whiteKingUnderattack;
+            m_checkShah_Black = blackKingUnderattack;
+            m_piece_Attacking_king.clear();
+            m_whoseMove = !m_whoseMove;
+            // emit signal_Change_picture(m_whoseMove);
+            piece->setFirst_MoveFalse();
+
+
+            // Если пешка бота дошла до конца, то автоматом делаем её ферзем
+            if(piece->getPiece() == 6)
+            {
+                if((m_playerColor == 0 && piece->getColor() == false && newRow == 0) || (m_playerColor == 1 && piece->getColor() == false && newRow ==7))
+                {
+                    piece->slot_PieceSelection(2);
+                }
+                else if((m_playerColor == 0 && piece->getColor() == true && newRow == 7) || (m_playerColor == 1  && piece->getColor() == true && newRow == 0))
+                {
+                    piece->slot_PieceSelection(2);
+                }
+                else;
+            }
+            piece = nullptr;
+            m_whiteSquareCover.clear();
+            m_blackSquareCover.clear();
+        }
+    }
 }
 
 void ChessBoard::slot_PlayerColor(bool color)

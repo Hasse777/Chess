@@ -14,6 +14,8 @@ private:
     unsigned short m_piece;
 public:
     explicit ChessPiece(bool color, unsigned short piece, const int squareSize);
+    ChessPiece(const ChessPiece& other); // Конструктор копирования
+    ChessPiece& operator=(const ChessPiece& other);
     bool getColor() const;
     bool getFirst_Move() const;
     void setFirst_MoveFalse();
@@ -24,7 +26,10 @@ signals:
     void signal_mousePressEvent(ChessPiece* piece);
     void signal_mouseReleaseEvent(ChessPiece* piece, QPointF position);
 public slots:
-    void slots_PieceSelection(int pieceType);
+    void slot_PieceSelection(int pieceType);
 };
+
+
+
 
 #endif // CHESSPIECE_H

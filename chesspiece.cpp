@@ -32,6 +32,26 @@ ChessPiece::ChessPiece(bool color, unsigned short piece, const int squareSize) :
     setPixmap(pixmap);
 }
 
+
+ChessPiece::ChessPiece(const ChessPiece &other)
+{
+    m_color = other.m_color;
+    m_first_move = other.m_first_move;
+    m_piece = other.m_piece;
+}
+
+ChessPiece &ChessPiece::operator=(const ChessPiece &other)
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+    m_color = other.m_color;
+    m_first_move = other.m_first_move;
+    m_piece = other.m_piece;
+    return *this;
+}
+
 bool ChessPiece::getColor() const
 {
     return m_color;
@@ -58,7 +78,7 @@ void ChessPiece::mousePressEvent(QGraphicsSceneMouseEvent *event)
     //QGraphicsPixmapItem::mousePressEvent(event);
 }
 
-void ChessPiece::slots_PieceSelection(int pieceType)
+void ChessPiece::slot_PieceSelection(int pieceType)
 {
     QString colorStr = m_color ? "Black" : "White";
     QString pieceName;

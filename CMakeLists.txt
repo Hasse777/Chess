@@ -29,6 +29,7 @@ add_executable(Chess
   sideselectiondialog.h sideselectiondialog.cpp
   artificial_intelligence.h artificial_intelligence.cpp
 
+
 )
 
 target_link_libraries(Chess PRIVATE Qt6::Widgets)
