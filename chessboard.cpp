@@ -100,40 +100,50 @@ void ChessBoard::arrangement_piece(bool playerColor)
     m_blackKingPos.first = (playerColor == 0 ? 0 : 7);
     m_blackKingPos.second = 4;
     m_checkShah_Black = false;
-    //qDebug() << m_blackKingPos.first;
 
-    // Добавление белых фигур
+    // Добавление верхних фигур
+    for(int i = 0; i < 2; i++)
     {
-        int i = (playerColor == 0 ? 7 : 0);
-        int direction = (playerColor == 0 ? -1 : 1);
-        for(; (playerColor == 0 ? i > 5 : i < 2); i += direction)
+        for(int j = 0 ; j < 8; j++)
         {
-            for(int j = 0; j < 8; j++)
+            switch (piecePositions[i][j])
             {
-                m_pieceOnBoard[i][j] = new ChessPiece(0, piecePositions[i][j], m_square_Size);
-                this->m_scene->addItem(m_pieceOnBoard[i][j]);
-                m_pieceOnBoard[i][j]->setZValue(1);
-                m_pieceOnBoard[i][j]->setPos(j * m_square_Size + m_indentation, i  * m_square_Size + m_indentation);
-                connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mousePressEvent, this, &ChessBoard::slot_PiecePressed);
+            case 1: m_pieceOnBoard[i][j] = new KingPiece(!m_playerColor, 1, {i, j}, m_square_Size);  break;
+            case 2: m_pieceOnBoard[i][j] = new QueenPiece(!m_playerColor, 2, {i, j}, m_square_Size);  break;
+            case 3: m_pieceOnBoard[i][j] = new RookPiece(!m_playerColor, 3, {i, j}, m_square_Size);  break;
+            case 4: m_pieceOnBoard[i][j] = new ElephantPiece(!m_playerColor, 4, {i, j}, m_square_Size);  break;
+            case 5: m_pieceOnBoard[i][j] = new HorsePiece(!m_playerColor, 5, {i, j}, m_square_Size);  break;
+            case 6: m_pieceOnBoard[i][j] = new HorsePiece(!m_playerColor, 6, {i, j}, m_square_Size);  break;
+            default: continue;
+                break;
             }
+            this->m_scene->addItem(m_pieceOnBoard[i][j]);
+            m_pieceOnBoard[i][j]->setZValue(1);
+            m_pieceOnBoard[i][j]->QGraphicsItem::setPos(j * m_square_Size + m_indentation, i  * m_square_Size + m_indentation);
+            connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mousePressEvent, this, &ChessBoard::slot_PiecePressed);
         }
     }
 
-
-    // Добавление черных фигур
+    // Добавление нижних
+    for(int i = 6; i < 8; i++)
     {
-        int i = (playerColor == 0 ? 0 : 7);
-        int direction = (playerColor == 0 ? 1 : -1);
-        for(;(playerColor == 0 ? i < 2 : i > 5); i += direction)
+        for(int j = 0 ; j < 8; j++)
         {
-            for(int j = 0; j < 8; j++)
+            switch (piecePositions[i][j])
             {
-                m_pieceOnBoard[i][j] = new ChessPiece(1, piecePositions[i][j], m_square_Size);
-                this->m_scene->addItem(m_pieceOnBoard[i][j]);
-                m_pieceOnBoard[i][j]->setZValue(1);
-                m_pieceOnBoard[i][j]->setPos(j * m_square_Size + m_indentation, i  * m_square_Size + m_indentation);
-                connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mousePressEvent, this, &ChessBoard::slot_PiecePressed);
+            case 1: m_pieceOnBoard[i][j] = new KingPiece(m_playerColor, 1, {i, j}, m_square_Size);  break;
+            case 2: m_pieceOnBoard[i][j] = new QueenPiece(m_playerColor, 2, {i, j}, m_square_Size);  break;
+            case 3: m_pieceOnBoard[i][j] = new RookPiece(m_playerColor, 3, {i, j}, m_square_Size);  break;
+            case 4: m_pieceOnBoard[i][j] = new ElephantPiece(m_playerColor, 4, {i, j}, m_square_Size);  break;
+            case 5: m_pieceOnBoard[i][j] = new HorsePiece(m_playerColor, 5, {i, j}, m_square_Size);  break;
+            case 6: m_pieceOnBoard[i][j] = new HorsePiece(m_playerColor, 6, {i, j}, m_square_Size);  break;
+            default: continue;
+                break;
             }
+            this->m_scene->addItem(m_pieceOnBoard[i][j]);
+            m_pieceOnBoard[i][j]->setZValue(1);
+            m_pieceOnBoard[i][j]->QGraphicsItem::setPos(j * m_square_Size + m_indentation, i  * m_square_Size + m_indentation);
+            connect(m_pieceOnBoard[i][j], &ChessPiece::signal_mousePressEvent, this, &ChessBoard::slot_PiecePressed);
         }
     }
 }
@@ -290,7 +300,7 @@ void ChessBoard::highlighting_possible_moves(ChessPiece *piece)
     {
         int direction = (m_playerColor == 0 ? (piece->getColor() ? -1 : 1) : (piece->getColor() ? 1 : -1));
 
-        int counter_move = (piece->getFirst_Move() == true) ? 2 : 1;
+        int counter_move = (piece->getFirstMove() == true) ? 2 : 1;
         unsigned short newRow = i;
 
         // Проверка ходов вперед
@@ -637,7 +647,7 @@ void ChessBoard::addMovesForWidget(ChessPiece *piece, int oldRow, int oldCol, in
 bool ChessBoard::castling_check(bool short_or_long, ChessPiece *piece)
 {
     // Проверяем делал ли король ход и находится ли он под шахом
-    if(!piece->getFirst_Move() || (piece->getColor() == false && m_checkShah_White == true) || ((piece->getColor() == true && m_checkShah_Black == true)))    return false;
+    if(!piece->getFirstMove() || (piece->getColor() == false && m_checkShah_White == true) || ((piece->getColor() == true && m_checkShah_Black == true)))    return false;
     int row = piece->pos().y() / m_square_Size;
     int col = piece->pos().x() / m_square_Size;
     int direction = short_or_long == 0 ? -1 : 1; // Направление движения
@@ -650,7 +660,7 @@ bool ChessBoard::castling_check(bool short_or_long, ChessPiece *piece)
         col += direction;
         if(col == 0 || col == 7)
         {
-            if(m_pieceOnBoard[row][col] == nullptr || m_pieceOnBoard[row][col]->getFirst_Move() == false) return false;
+            if(m_pieceOnBoard[row][col] == nullptr || m_pieceOnBoard[row][col]->getFirstMove() == false) return false;
             return true;
         }
         if(m_pieceOnBoard[row][col] != nullptr || (count < 2 && square_under_attack({row, col}, piece->getColor()))) return false;
@@ -881,20 +891,20 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
 
         // Проверка рокировки
         // Если король ходит первый раз и для него подсвечены такие столбцы как 0 и 7, то нам не нужны проверки на валидность тк они выполняются в функции подсветки возможных ходов
-        if(m_selectedPiece->getPiece() == 1 && m_selectedPiece->getFirst_Move() && (newCol == 0 || newCol == 7))
+        if(m_selectedPiece->getPiece() == 1 && m_selectedPiece->getFirstMove() && (newCol == 0 || newCol == 7))
         {
             int oldColRook = newCol == 7 ? 7 : 0;
             int newColRook = newCol == 7 ? 5 : 3;
             int colKing = newCol == 7 ? 6 : 2;
             //Перемещаем короля
-            m_selectedPiece->setPos(QRect(colKing * m_square_Size + m_indentation, oldRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
-            m_selectedPiece->setFirst_MoveFalse();
+            m_selectedPiece->QGraphicsItem::setPos(QRect(colKing * m_square_Size + m_indentation, oldRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
+            m_selectedPiece->setFirstMove();
             m_pieceOnBoard[oldRow][oldCol] = nullptr;
             m_pieceOnBoard[oldRow][colKing] = m_selectedPiece;
 
             //Перемещаем ладью
-            m_pieceOnBoard[oldRow][oldColRook]->setPos(QRect(newColRook * m_square_Size + m_indentation, oldRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
-            m_pieceOnBoard[oldRow][oldColRook]->setFirst_MoveFalse();
+            m_pieceOnBoard[oldRow][oldColRook]->QGraphicsItem::setPos(QRect(newColRook * m_square_Size + m_indentation, oldRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
+            m_pieceOnBoard[oldRow][oldColRook]->setFirstMove();
             m_pieceOnBoard[oldRow][newColRook] = m_pieceOnBoard[oldRow][oldColRook];
             m_pieceOnBoard[oldRow][oldColRook] = nullptr;
 
@@ -929,7 +939,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
                         emit signal_addEatenImages(m_pieceOnBoard[newRow][newCol]->pixmap());
                         m_scene->removeItem(m_pieceOnBoard[newRow][newCol]);
                         m_pieceOnBoard[newRow][newCol] = nullptr;
-                        m_selectedPiece->setPos(cell->rect().topLeft());
+                        m_selectedPiece->QGraphicsItem::setPos(cell->rect().topLeft());
                         clear_highlight();
                         endGame(color);
                         return;
@@ -960,7 +970,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
                 }
             }
             //Перемещаем фигуру на новую позицию
-            m_selectedPiece->setPos(cell->rect().topLeft());
+            m_selectedPiece->QGraphicsItem::setPos(cell->rect().topLeft());
 
 
             //Обновляем позицию фигуры на доске
@@ -1010,7 +1020,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
              m_pawnPiece = nullptr;
              //-----------------------------------------------------------------------------------------------------
              // Если это пешка, которую можно взять на проходе, то нужно обновить указатель и координаты на один ход
-             if(m_selectedPiece->getPiece() == 6 && m_selectedPiece->getFirst_Move() && qMax(newRow,oldRow) - qMin(newRow,oldRow) == 2)
+             if(m_selectedPiece->getPiece() == 6 && m_selectedPiece->getFirstMove() && qMax(newRow,oldRow) - qMin(newRow,oldRow) == 2)
              {
                  int direction =  (m_playerColor == 0 ? (m_selectedPiece->getColor() ? -1 : 1) : (m_selectedPiece->getColor() ? 1 : -1));
                  //int direction = (m_playerColor == 0 ? (piece->getColor() ? -1 : 1) : (piece->getColor() ? 1 : -1));
@@ -1025,7 +1035,7 @@ void ChessBoard::slot_HighlightedCell_Clicked(QGraphicsRectItem *cell)
              m_piece_Attacking_king.clear();
              m_whoseMove = !m_whoseMove;
              // emit signal_Change_picture(m_whoseMove);
-             m_selectedPiece->setFirst_MoveFalse();
+             m_selectedPiece->setFirstMove();
 
 
              // Если пешка дошла до конца доски, то нужно вызвать диалоговое окно выбора фигуры
@@ -1089,7 +1099,7 @@ void ChessBoard::slot_MoveBot(ChessPiece *piece, std::pair<int, int> coordinates
                 emit signal_addEatenImages(m_pieceOnBoard[newRow][newCol]->pixmap());
                 m_scene->removeItem(m_pieceOnBoard[newRow][newCol]);
                 m_pieceOnBoard[newRow][newCol] = nullptr;
-                piece->setPos(QRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
+                piece->QGraphicsItem::setPos(QRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
                 endGame(color);
                 return;
             }
@@ -1113,7 +1123,7 @@ void ChessBoard::slot_MoveBot(ChessPiece *piece, std::pair<int, int> coordinates
             }
 
         }
-        piece->setPos(QRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
+        piece->QGraphicsItem::setPos(QRect(newCol * m_square_Size + m_indentation, newRow * m_square_Size + m_indentation, m_square_Size, m_square_Size).topLeft());
 
         //Обновляем позицию фигуры на доске
         m_pieceOnBoard[oldRow][oldCol] = nullptr;
@@ -1153,7 +1163,7 @@ void ChessBoard::slot_MoveBot(ChessPiece *piece, std::pair<int, int> coordinates
             m_pawnPiece = nullptr;
             //-----------------------------------------------------------------------------------------------------
             // Если это пешка, которую можно взять на проходе, то нужно обновить указатель и координаты на один ход
-            if(piece->getPiece() == 6 && piece->getFirst_Move() && qMax(newRow,oldRow) - qMin(newRow,oldRow) == 2)
+            if(piece->getPiece() == 6 && piece->getFirstMove() && qMax(newRow,oldRow) - qMin(newRow,oldRow) == 2)
             {
                 int direction =  (m_playerColor == 0 ? (piece->getColor() ? -1 : 1) : (piece->getColor() ? 1 : -1));
                 //int direction = (m_playerColor == 0 ? (piece->getColor() ? -1 : 1) : (piece->getColor() ? 1 : -1));
@@ -1168,7 +1178,7 @@ void ChessBoard::slot_MoveBot(ChessPiece *piece, std::pair<int, int> coordinates
             m_piece_Attacking_king.clear();
             m_whoseMove = !m_whoseMove;
             // emit signal_Change_picture(m_whoseMove);
-            piece->setFirst_MoveFalse();
+            piece->setFirstMove();
 
 
             // Если пешка бота дошла до конца, то автоматом делаем её ферзем

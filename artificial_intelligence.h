@@ -7,16 +7,16 @@
 class ChessPiece;
 class ChessBoard;
 class MinMax;
+//bool bot_color;
 
 class Artificial_Intelligence : public QObject
 {
     Q_OBJECT
 public:
-    explicit Artificial_Intelligence(const ChessBoard* const, bool color);
+    explicit Artificial_Intelligence(const ChessBoard* const chessBoard, bool color);
     ~Artificial_Intelligence();
 private:
     const ChessBoard* const m_ChessBoard;
-    QVector<std::pair<ChessPiece*, QVector<std::pair<int, int>>>> m_possibleMove; // Вектор всех фигур и их возможных ходов
     bool m_color;
     MinMax* m_MinMax;
 public slots:
@@ -35,8 +35,8 @@ private:
     const int m_squareSize;
     bool m_whoMove; // кто ходит
     QVector<QVector<ChessPiece*>> m_pieceOnBoard{8, QVector<ChessPiece*>(8, nullptr)}; // Текущее состояние доски
+    QVector<std::pair<ChessPiece*, QVector<std::pair<int, int>>>> m_possibleMove; // Вектор всех возможных ходов фигур
     enum m_pieceType{none, king, queen, rook, elephant, horse, pawn}; // Перечисление очков фигур для оценивания хода
-    void setPossiblelMoveInPair();
     std::pair<ChessPiece*, std::pair<int, int>> choiceMove(); // Выбор хода
     std::pair<ChessPiece*, std::pair<int, int>> choiceMoveTest();
     void distributionByChessPiece(ChessPiece*);
