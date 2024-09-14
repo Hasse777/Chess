@@ -34,15 +34,19 @@ private:
     QVector<std::pair<int, int>> m_blackSquareCover; // Клетки которые ведут к белому королю, если их можно перекрыть, то мат королю не будет поставлен
     ChessPiece* m_selectedPiece; // Указатель на шахматную фигуру, которая ходит на выделеную клетку
     ChessPiece* m_pawnPiece;     // Указатель на шахматную фигуру, которую можно взять на проходе
-    std::pair<int, int> m_whiteKingPos; // Храним позиции обоих королей
-    std::pair<int, int> m_blackKingPos;
+    // std::pair<int, int> m_whiteKingPos; // Храним позиции обоих королей
+    // std::pair<int, int> m_blackKingPos;
+    //-------------------------------------------------------------------
+    KingPiece* m_whiteKing; // Храним указатели обоих королей
+    KingPiece* m_blackKing;
+    //-------------------------------------------------------------------
     std::pair<int, int> m_pawnPos; // Храним координаты клетки, через которую прошла пешка, которую можно взять на проходе
     enum m_piece {none, king, queen, rook, elephant, horse, pawn}; // Перечисление всех фигур
     int m_square_Size; // Размер шахматной клетки
     int m_indentation; // Отсуп чтобы освободить пространство для подписи клеток a-h,1-8
     int m_counterMoves; // переменная, которая показывает какой по счету ход делается в партии
-    bool m_checkShah_White; // шах белым
-    bool m_checkShah_Black; // шах черным
+    // bool m_checkShah_White; // шах белым
+    // bool m_checkShah_Black; // шах черным
     bool m_whoseMove; // Переменная для того чтобы узнать чей сейчас ход
     bool m_playerColor; // За кого будет играть игрок
     void paint_Board(); // Рисование шахматной доски
@@ -70,7 +74,7 @@ protected:
 private slots:
      void slot_PiecePressed(ChessPiece* piece);
      void slot_HighlightedCell_Clicked(QGraphicsRectItem* cell);
-     void slot_MoveBot(ChessPiece *piece, std::pair<int, int> coordinates);
+     void slot_MoveBot(/*ChessPiece *piece, */std::pair<int, int> coordinates);
      void slot_PlayerColor(bool color);
  public slots:
      void slot_newGame();

@@ -28,6 +28,7 @@ add_executable(Chess
   mainmenudialog.h mainmenudialog.cpp
   sideselectiondialog.h sideselectiondialog.cpp
   artificial_intelligence.h artificial_intelligence.cpp
+  chesspieceforartifical.h chesspieceforartifical.cpp
 
 
 )
