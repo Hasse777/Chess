@@ -40,8 +40,7 @@ signals:
 class MinMax
 {
 private:
-    int m_depth; // глубина n-дерева
-    int m_score; // игровые очки
+    int m_depth = 6; // глубина n-дерева
     bool m_whoMove; // кто ходит
     // Указатели на королей
     //----------------------------------------------------------
@@ -55,36 +54,30 @@ private:
     // Текущее состояние доски
     QVector<QVector<ChessPieceForArtifical*>> m_pieceOnBoard{8, QVector<ChessPieceForArtifical*>(8, nullptr)};
     //----------------------------------------------------------
-    // Все возможные ходы
-    QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>> allPossibleMoves;
-    // ---------------------------------------------------------
+    // Лучший ход
+    std::pair<ChessPieceForArtifical*, std::pair<int, int>> m_bestMove; // лучший ход, ChessPieceForArtifical обьект фигуры, std::pair<int, int> куда она ходит
+    //---------------------------------------------------------
     // enum m_pieceType{none, king, queen, rook, elephant, horse, pawn}; // Перечисление очков фигур для оценивания хода
-    // // std::pair<ChessPiece*, std::pair<int, int>> choiceMove(); // Выбор хода
-    // // std::pair<ChessPiece*, std::pair<int, int>> choiceMoveTest();
-    void distributionByChessPiece(); // Функции для записи всех возможных ходов для фигур
-    void countingPossibleMovesPawn(ChessPieceForArtifical* piece);
-    void countingPossibleMovesHorse(ChessPieceForArtifical* piece);
-    void countingPossibleMovesElephant(ChessPieceForArtifical* piece);
-    void countingPossibleMovesRook(ChessPieceForArtifical* piece);
-    void countingPossibleMovesQueen(ChessPieceForArtifical* piece);
-    void countingPossibleMovesKing(ChessPieceForArtifical* piece);
+    void distributionByChessPiece(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/
+    QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/); // Функции для записи всех возможных ходов для фигур
+    bool pieceUnderAttack(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard /*- Массив где будет проверка*/, std::pair<int, int> coordinates, bool color); // Функция для проверки находится ли клетка под атакой, color - цвет фигуры на клетке
+    void countingPossibleMovesPawn(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/ QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/);
+    void countingPossibleMovesHorse(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/ QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/);
+    void countingPossibleMovesElephant(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/ QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/);
+    void countingPossibleMovesRook(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/ QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/);
+    void countingPossibleMovesQueen(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/ QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/);
+    void countingPossibleMovesKing(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/ QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/);
+    // -----------------------------------------------------------------
+    int evaluateBoard(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard);
+    int findOptimalMove(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, int depth, int alpha, int beta, bool maxOrminPlayer); // Выбор хода и вызов рекурсии
+    QVector<QVector<ChessPieceForArtifical*>>* copyPieceOnBoard_in_tempBoard(const QVector<QVector<ChessPieceForArtifical *> > &pieceOnBoard);
+    void clearTempPieceOnBoard(QVector<QVector<ChessPieceForArtifical*>>& board);
+    int evaluatePiece(ChessPieceForArtifical* piece) const; // Функция, которая возвращает стоимость фигуры
+    void makeMove(ChessPieceForArtifical* piece, std::pair<int, int> coordinates, QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard /*- Массив где будет делаться ход*/); // Функция, которая делает ход и фиксирует его во временном массиве m_pieceOnBoard_Temp
     // //-----------------------------------------------------------------
-    // // Функции для оценки хода
-    // int evaluateMovePawn(ChessPiece*, std::pair<int, int> best_move);
-    // int evaluateMoveHorse(ChessPiece*, std::pair<int, int> best_move);
-    // int evaluateMoveElephant(ChessPiece*, std::pair<int, int> best_move);
-    // int evaluateMoveRook(ChessPiece*, std::pair<int, int> best_move);
-    // int evaluateMoveQueen(ChessPiece*, std::pair<int, int> best_move);
-    // int evaluateMoveKing(ChessPiece*, std::pair<int, int> best_move);
-    // //-----------------------------------------------------------------
-    // int evaluatePiece(ChessPiece*); // Функция оценки фигуры
-
-
-
-    // void test_m_possibleMove();
 
 public:
-    MinMax(int m_score, bool whoMove, int depth, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, ChessPieceForArtifical* whiteKing, ChessPieceForArtifical* blackKing, ChessPieceForArtifical* pawn);
+    MinMax(bool whoMove, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard);
     ~MinMax();
 };
 

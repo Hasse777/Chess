@@ -43,7 +43,7 @@ void Artificial_Intelligence::freeMemory()
 }
 
 void Artificial_Intelligence::slot_MoveBot()
-{   
+{
     int row = m_ChessBoard->m_pieceOnBoard.size();
     int col = m_ChessBoard->m_pieceOnBoard[0].size();
     for(int i = 0; i < row; i++)
@@ -75,16 +75,16 @@ void Artificial_Intelligence::slot_MoveBot()
     }
 
 
-    m_MinMax = new MinMax(0, m_color, 6, m_pieceOnBoard, m_whiteKing, m_blackKing, nullptr);
+    m_MinMax = new MinMax(m_color, m_pieceOnBoard);
     freeMemory();
 }
 
 
 
-void MinMax::distributionByChessPiece()
+void MinMax::distributionByChessPiece(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves)
 {
-    int row = m_pieceOnBoard.size();
-    int col = m_pieceOnBoard[0].size();
+    int row = pieceOnBoard.size();
+    int col = pieceOnBoard[0].size();
     if(row != 8 || col != 8)
     {
         QMessageBox::critical(nullptr, "Error", "Row and col aren't == 8");
@@ -94,26 +94,27 @@ void MinMax::distributionByChessPiece()
     {
         for(int j = 0; j < col; j++)
         {
-            ChessPieceForArtifical* piece = m_pieceOnBoard[i][j];
+            ChessPieceForArtifical* piece = pieceOnBoard[i][j];
             if(piece != nullptr && piece->getColor() == m_whoMove)
             {
                 switch (piece->getPiece())
                 {
-                case 1: countingPossibleMovesKing(piece); break;
-                case 2: countingPossibleMovesQueen(piece); break;
-                case 3: countingPossibleMovesRook(piece); break;
-                case 4: countingPossibleMovesElephant(piece);break;
-                case 5: countingPossibleMovesHorse(piece); break;
-                case 6: countingPossibleMovesPawn(piece); break;
+                case 1: countingPossibleMovesKing(piece, pieceOnBoard, allPossibleMoves); break;
+                case 2: countingPossibleMovesQueen(piece, pieceOnBoard, allPossibleMoves); break;
+                case 3: countingPossibleMovesRook(piece, pieceOnBoard, allPossibleMoves); break;
+                case 4: countingPossibleMovesElephant(piece, pieceOnBoard, allPossibleMoves);break;
+                case 5: countingPossibleMovesHorse(piece, pieceOnBoard, allPossibleMoves); break;
+                case 6: countingPossibleMovesPawn(piece, pieceOnBoard, allPossibleMoves); break;
                 default:
                     break;
                 }
             }
         }
     }
+
 }
 
-void MinMax::countingPossibleMovesPawn(ChessPieceForArtifical *piece)
+void MinMax::countingPossibleMovesPawn(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves)
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
@@ -129,11 +130,11 @@ void MinMax::countingPossibleMovesPawn(ChessPieceForArtifical *piece)
             {
                 break;
             }
-            if(m_pieceOnBoard[newRow][col] == nullptr)
+            if(pieceOnBoard[newRow][col] == nullptr)
             {
                 allPossibleMoves.push_back({piece, {newRow, col}});
             }
-            else if(m_pieceOnBoard[newRow][col] != nullptr && m_pieceOnBoard[newRow][col]->getColor() != m_whoMove)
+            else if(pieceOnBoard[newRow][col] != nullptr && pieceOnBoard[newRow][col]->getColor() != m_whoMove)
             {
                 allPossibleMoves.push_back({piece, {newRow, col}});
             }
@@ -151,26 +152,26 @@ void MinMax::countingPossibleMovesPawn(ChessPieceForArtifical *piece)
         return;
     }
     int newCol = col + 1;
-    if(newCol >= 0 && newCol < 8 && m_pieceOnBoard[newRow][newCol] != nullptr)
+    if(newCol >= 0 && newCol < 8 && pieceOnBoard[newRow][newCol] != nullptr)
     {
         allPossibleMoves.push_back({piece, {newRow, newCol}});
     }
     newCol = col - 1;
-    if(newCol >= 0 && newCol < 8 && m_pieceOnBoard[newRow][newCol] != nullptr)
+    if(newCol >= 0 && newCol < 8 && pieceOnBoard[newRow][newCol] != nullptr)
     {
         allPossibleMoves.push_back({piece, {newRow, newCol}});
     }
 }
 
-void MinMax::countingPossibleMovesHorse(ChessPieceForArtifical *piece)
+void MinMax::countingPossibleMovesHorse(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves)
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
     QVector<std::pair<int, int>> direction
-    {
-        {row + 1, col + 2}, {row - 1, col + 2}, {row + 1, col - 2}, {row - 1, col -2},
-        {row + 2, col + 1}, {row + 2, col - 1}, {row - 2, col + 1}, {row - 2, col - 1}
-    };
+        {
+            {row + 1, col + 2}, {row - 1, col + 2}, {row + 1, col - 2}, {row - 1, col -2},
+            {row + 2, col + 1}, {row + 2, col - 1}, {row - 2, col + 1}, {row - 2, col - 1}
+        };
     QVector<std::pair<int, int>>::Iterator it = direction.begin();
     while (it != direction.end())
     {
@@ -178,7 +179,7 @@ void MinMax::countingPossibleMovesHorse(ChessPieceForArtifical *piece)
         int j = it->second;
         if(i >= 0 && i < 8 && j >= 0 && j < 8)
         {
-            if(m_pieceOnBoard[i][j] == nullptr || (m_pieceOnBoard[i][j] != nullptr && m_pieceOnBoard[i][j]->getColor() != m_whoMove))
+            if(pieceOnBoard[i][j] == nullptr || (pieceOnBoard[i][j] != nullptr && pieceOnBoard[i][j]->getColor() != m_whoMove))
             {
                 allPossibleMoves.push_back({piece, {i, j}});
             }
@@ -187,7 +188,7 @@ void MinMax::countingPossibleMovesHorse(ChessPieceForArtifical *piece)
     }
 }
 
-void MinMax::countingPossibleMovesElephant(ChessPieceForArtifical *piece)
+void MinMax::countingPossibleMovesElephant(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves)
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
@@ -204,12 +205,12 @@ void MinMax::countingPossibleMovesElephant(ChessPieceForArtifical *piece)
         newCol += it->second;
         if(newRow >= 0 && newRow < 8 && newCol >=0 && newCol < 8)
         {
-            if(m_pieceOnBoard[newRow][newCol] == nullptr)
+            if(pieceOnBoard[newRow][newCol] == nullptr)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
                 continue;
             }
-            else if(m_pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
+            else if(pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
             }
@@ -227,7 +228,7 @@ void MinMax::countingPossibleMovesElephant(ChessPieceForArtifical *piece)
     }
 }
 
-void MinMax::countingPossibleMovesRook(ChessPieceForArtifical *piece)
+void MinMax::countingPossibleMovesRook(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves)
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
@@ -244,12 +245,12 @@ void MinMax::countingPossibleMovesRook(ChessPieceForArtifical *piece)
         newCol += it->second;
         if(newRow >= 0 && newRow < 8 && newCol >=0 && newCol < 8)
         {
-            if(m_pieceOnBoard[newRow][newCol] == nullptr)
+            if(pieceOnBoard[newRow][newCol] == nullptr)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
                 continue;
             }
-            else if(m_pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
+            else if(pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
             }
@@ -266,7 +267,7 @@ void MinMax::countingPossibleMovesRook(ChessPieceForArtifical *piece)
     }
 }
 
-void MinMax::countingPossibleMovesQueen(ChessPieceForArtifical *piece)
+void MinMax::countingPossibleMovesQueen(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves)
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
@@ -284,12 +285,12 @@ void MinMax::countingPossibleMovesQueen(ChessPieceForArtifical *piece)
         newCol += it->second;
         if(newRow >= 0 && newRow < 8 && newCol >=0 && newCol < 8)
         {
-            if(m_pieceOnBoard[newRow][newCol] == nullptr)
+            if(pieceOnBoard[newRow][newCol] == nullptr)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
                 continue;
             }
-            else if(m_pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
+            else if(pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
             }
@@ -306,7 +307,7 @@ void MinMax::countingPossibleMovesQueen(ChessPieceForArtifical *piece)
     }
 }
 
-void MinMax::countingPossibleMovesKing(ChessPieceForArtifical *piece)
+void MinMax::countingPossibleMovesKing(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves)
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
@@ -324,7 +325,7 @@ void MinMax::countingPossibleMovesKing(ChessPieceForArtifical *piece)
         newCol += it->second;
         if(newRow >= 0 && newRow < 8 && newCol >=0 && newCol < 8)
         {
-            if(m_pieceOnBoard[newRow][newCol] == nullptr || m_pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
+            if(pieceOnBoard[newRow][newCol] == nullptr || pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
 
@@ -336,8 +337,337 @@ void MinMax::countingPossibleMovesKing(ChessPieceForArtifical *piece)
     }
 }
 
-MinMax::MinMax(int m_score, bool whoMove, int depth, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, ChessPieceForArtifical* whiteKingStatus, ChessPieceForArtifical* blackKingStatus,ChessPieceForArtifical* pawnStatus)
-: m_depth{depth}, m_whoMove{whoMove}
+
+
+int MinMax::evaluateBoard(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard)
+{
+    // Можно дописать логику, чем больше фигур у стороны тем больше у неё очков
+    int scoreBoard = 0;
+    for(int i = 0; i < pieceOnBoard.size(); i++)
+    {
+        for(int j = 0; j < pieceOnBoard[0].size(); j++)
+        {
+            if(pieceOnBoard[i][j] != nullptr)
+            {
+                int scorePiece = evaluatePiece(pieceOnBoard[i][j]);
+                bool color = pieceOnBoard[i][j]->getColor();
+                if(pieceUnderAttack(pieceOnBoard, {i, j}, color))
+                {
+                    // Если фигура под атакой, то снимаем либо прибавляем очки
+                    scoreBoard += (color == 1 ? scorePiece : -scorePiece);
+                }
+            }
+            else
+            {
+                if(pieceUnderAttack(pieceOnBoard, {i, j}, false))
+                {
+                    // Чем больше контроля у черных тем меньше очков
+                    scoreBoard -= 5;
+                }
+                if(pieceUnderAttack(pieceOnBoard, {i, j}, true))
+                {
+                    // Чем больше контроля у белых тем больше очков
+                    scoreBoard += 5;
+                }
+            }
+        }
+    }
+    return scoreBoard;
+}
+
+int MinMax::findOptimalMove(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, int depth, int alpha, int beta, bool maxOrminPlayer)
+{
+    if(m_depth == 0)
+    {
+        return evaluateBoard(pieceOnBoard);
+    }
+    // Все возможные ходы
+    QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>> allPossibleMoves;
+    QVector<QVector<ChessPieceForArtifical*>> *tempBoard = this->copyPieceOnBoard_in_tempBoard(pieceOnBoard);
+
+
+    if(maxOrminPlayer == 0) // Максимизирующий игрок
+    {
+        int maxEval = std::numeric_limits<int>::min();
+        distributionByChessPiece(pieceOnBoard, allPossibleMoves);
+        for(int i = 0; i < allPossibleMoves.size(); i++)
+        {
+            ChessPieceForArtifical* piece = allPossibleMoves[i].first;
+            makeMove(piece, allPossibleMoves[i].second, *tempBoard);
+            // Написать откат хода
+            int eval = findOptimalMove(*tempBoard, depth - 1, alpha, beta, !maxOrminPlayer);
+        }
+        return maxEval;
+    }
+    else
+    {
+        int minEval = std::numeric_limits<int>::max();
+        return minEval;
+    }
+    clearTempPieceOnBoard(*tempBoard);
+    allPossibleMoves.clear();
+    tempBoard = nullptr;
+    return -1;
+}
+
+QVector<QVector<ChessPieceForArtifical*>>* MinMax::copyPieceOnBoard_in_tempBoard(const QVector<QVector<ChessPieceForArtifical *> > &pieceOnBoard)
+{
+    if(pieceOnBoard.size() != 8 || pieceOnBoard[0].size() != 8)
+    {
+        QMessageBox::critical(nullptr, "Error", "m_ChessBoard->m_pieceOnBoard is incorrect size");
+        QApplication::quit();
+    }
+    // Копируем состояние шахматной доски для анализа
+    QVector<QVector<ChessPieceForArtifical*>> *tempBoard = new QVector<QVector<ChessPieceForArtifical*>>{8, QVector<ChessPieceForArtifical*>(8, nullptr)};
+    int row = pieceOnBoard.size();
+    int col = pieceOnBoard[0].size();
+    for(int i = 0; i < row; i++)
+    {
+        for(int j = 0; j < col; j++)
+        {
+            if(pieceOnBoard[i][j] != nullptr)
+            {
+                (*tempBoard)[i][j] = pieceOnBoard[i][j]->clone();
+            }
+            else
+            {
+                (*tempBoard)[i][j] = nullptr;
+            }
+        }
+    }
+    return tempBoard;
+}
+
+void MinMax::clearTempPieceOnBoard(QVector<QVector<ChessPieceForArtifical*>> &board)
+{
+    for (int i = 0; i < board.size(); ++i)
+    {
+        for (int j = 0; j < board[i].size(); ++j)
+        {
+            if (board[i][j] != nullptr)
+            {
+                delete board[i][j];
+                board[i][j] = nullptr;
+            }
+        }
+    }
+    board.clear();
+}
+
+
+int MinMax::evaluatePiece(ChessPieceForArtifical *piece) const
+{
+    int price = 0;
+    switch (piece->getPiece())
+    {
+    case 1: price = 900; break;
+    case 2: price = 90; break;
+    case 3: price = 50; break;
+    case 4: price = 30; break;
+    case 5: price = 30; break;
+    case 6: price = 10; break;
+    default:
+        break;
+    }
+    return price;
+}
+
+void MinMax::makeMove(ChessPieceForArtifical *piece, std::pair<int, int> coordinates, QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard)
+{
+    int oldRow = piece->getPos().first;
+    int oldCol = piece->getPos().second;
+    int newRow = coordinates.first;
+    int newCol = coordinates.second;
+    if(newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8 || pieceOnBoard.size() != 8 || pieceOnBoard[0].size() != 8)
+    {
+        QMessageBox::critical(nullptr, "Error", "Parameters aren't correct in makeMove");
+        QApplication::quit();
+    }
+
+
+    pieceOnBoard[oldRow][oldCol] = nullptr;
+    if(pieceOnBoard[newRow][newCol] != nullptr)
+    {
+        delete pieceOnBoard[newRow][newCol];
+    }
+    pieceOnBoard[newRow][newCol] = piece;
+    piece->setPos(coordinates);
+}
+
+bool MinMax::pieceUnderAttack(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, std::pair<int, int> coordinates, bool color)
+{
+    // Проверка атаки пешкой
+    int direction = (color == m_botPlayForColor ? 1 : -1); //Определяем с какой стороны должна находится вражеская пешка
+    int newRow = coordinates.first + direction;
+    if(newRow >= 0 && newRow < 8)
+    {
+        int newCol = coordinates.second + 1; // проверка атаки справа
+        if(newCol >= 0 && newCol < 8 && pieceOnBoard[newRow][newCol] != nullptr && pieceOnBoard[newRow][newCol]->getColor() != color && pieceOnBoard[newRow][newCol]->getPiece() != 3 && pieceOnBoard[newRow][newCol]->getPiece() != 5)
+        {
+            return true;
+        }
+        newCol = coordinates.second - 1; // проверка слева
+        if(newCol >= 0 && newCol < 8 && pieceOnBoard[newRow][newCol] != nullptr && pieceOnBoard[newRow][newCol]->getColor() != color && pieceOnBoard[newRow][newCol]->getPiece() != 3 && pieceOnBoard[newRow][newCol]->getPiece() != 5)
+        {
+            return true;
+        }
+    }
+
+    // Проверка атаки ферзём
+    {
+        QVector<std::pair<int, int>> direction =
+        {   {0, 1}, {0, -1}, {1, 0}, {-1, 0},
+            {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+        };
+        QVector<std::pair<int, int>>::Iterator it = direction.begin();
+        while (it != direction.end())
+        {
+            int newRow = coordinates.first;
+            int newCol = coordinates.second;
+            while (true)
+            {
+                newRow += it->first;
+                newCol += it->second;
+                if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
+                {
+                    if(pieceOnBoard[newRow][newCol] == nullptr)
+                    {
+                        continue;
+                    }
+                    else if(pieceOnBoard[newRow][newCol]->getPiece() == 2 && pieceOnBoard[newRow][newCol]->getColor() != color)
+                    {
+                        return true;
+                    }
+                    else break;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            it++;
+        }
+    }
+
+    //Проверка атаки ладьей
+    {
+        QVector<std::pair<int, int>> direction =
+            {   {0, 1}, {0, -1}, {1, 0}, {-1, 0}
+            };
+        QVector<std::pair<int, int>>::Iterator it = direction.begin();
+        while (it != direction.end())
+        {
+            int newRow = coordinates.first;
+            int newCol = coordinates.second;
+            while (true)
+            {
+                newRow += it->first;
+                newCol += it->second;
+                if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
+                {
+                    if(pieceOnBoard[newRow][newCol] == nullptr)
+                    {
+                        continue;
+                    }
+                    else if(pieceOnBoard[newRow][newCol]->getPiece() == 3 && pieceOnBoard[newRow][newCol]->getColor() != color)
+                    {
+                        return true;
+                    }
+                    else break;
+                }
+                else break;
+            }
+            it++;
+        }
+    }
+
+    // Проверка атаки слоном
+    {
+        QVector<std::pair<int, int>> direction =
+        {
+            {1, 1}, {1, -1}, {-1, -1}, {-1, 1}
+        };
+        QVector<std::pair<int, int>>::Iterator it = direction.begin();
+        while (it != direction.end())
+        {
+            int newRow = coordinates.first;
+            int newCol = coordinates.second;
+            while (1)
+            {
+                newRow += it->first;
+                newCol += it->second;
+                if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
+                {
+                    if(pieceOnBoard[newRow][newCol] == nullptr)
+                    {
+                        continue;
+                    }
+                    else if(pieceOnBoard[newRow][newCol]->getPiece() == 4 && pieceOnBoard[newRow][newCol]->getColor() != color)
+                    {
+                        return true;
+                    }
+                    else break;
+                }
+                else break;
+            }
+            it++;
+        }
+    }
+
+    //Проверка атаки конём
+    {
+        QVector<std::pair<int, int>> direction =
+            {
+                {2, 1}, {2, -1}, {1, 2}, {-1, 2},
+                {-2, 1}, {-2, -1}, {1, -2}, {-1, -2}
+            };
+        QVector<std::pair<int, int>>::Iterator it = direction.begin();
+        while (it != direction.end())
+        {
+            int newRow = coordinates.first + it->first;
+            int newCol = coordinates.second + it->second;
+            if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
+            {
+                if(pieceOnBoard[newRow][newCol] != nullptr && pieceOnBoard[newRow][newCol]->getColor() != color && pieceOnBoard[newRow][newCol]->getPiece() == 5)
+                {
+                    return true;
+                }
+            }
+            it++;
+        }
+    }
+
+    // Проверка атакой вражеским королем
+
+
+    {
+        QVector<std::pair<int, int>> direction =
+            {
+                {0, 1}, {0, -1}, {1, 1}, {1, -1},
+                {1, 0}, {-1, 0}, {-1, -1}, {-1, 1}
+            };
+        QVector<std::pair<int, int>>::Iterator it = direction.begin();
+        while (it != direction.end())
+        {
+            int newRow = coordinates.first + it->first;
+            int newCol = coordinates.second + it->second;
+            if(newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8)
+            {
+                if(pieceOnBoard[newRow][newCol] != nullptr && pieceOnBoard[newRow][newCol]->getColor() != color && pieceOnBoard[newRow][newCol]->getPiece() == 1)
+                {
+                    return true;
+                }
+            }
+            it++;
+        }
+    }
+
+    return false;
+}
+
+
+MinMax::MinMax(bool whoMove, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard)
+    : m_whoMove{whoMove}
 {
     // Копируем состояние шахматной доски для анализа
     int row = pieceOnBoard.size();
@@ -348,50 +678,20 @@ MinMax::MinMax(int m_score, bool whoMove, int depth, const QVector<QVector<Chess
         {
             if(pieceOnBoard[i][j] != nullptr)
             {
-                std::pair<int, int> pieceCoordinate = pieceOnBoard[i][j]->getPos();
-                bool color = pieceOnBoard[i][j]->getColor();
-                switch (pieceOnBoard[i][j]->getPiece())
-                {
-                case 1: m_pieceOnBoard[i][j] = new KingPieceForArtifical(color, pieceOnBoard[i][j]->getPiece(), pieceCoordinate, pieceOnBoard[i][j]->getFirstMove()) ;break;
-                case 2: m_pieceOnBoard[i][j] = new QueenPieceForArtifical(color, pieceOnBoard[i][j]->getPiece(), pieceCoordinate) ;break;
-                case 3: m_pieceOnBoard[i][j] = new RookPieceForArtifical(color, pieceOnBoard[i][j]->getPiece(), pieceCoordinate, pieceOnBoard[i][j]->getFirstMove()) ;break;
-                case 4: m_pieceOnBoard[i][j] = new ElephantPieceForArtifical(color, pieceOnBoard[i][j]->getPiece(), pieceCoordinate);break;
-                case 5: m_pieceOnBoard[i][j] = new HorsePieceForArtifical(color, pieceOnBoard[i][j]->getPiece(), pieceCoordinate) ;break;
-                case 6: m_pieceOnBoard[i][j] = new PawnPieceForArtifical(color, pieceOnBoard[i][j]->getPiece(), pieceCoordinate, pieceOnBoard[i][j]->getFirstMove()) ;break;
-                default:
-                    break;
-                }
+                m_pieceOnBoard[i][j] = pieceOnBoard[i][j]->clone();
+            }
+            else
+            {
+                m_pieceOnBoard[i][j] = nullptr;
             }
         }
     }
-    //-----------------------------------------------------------------
 
-    distributionByChessPiece();
-
-    // for(int i = 0 ; i < allPossibleMoves.size(); i++)
-    // {
-    //     if(allPossibleMoves[i].first->getPiece() == 1)
-    //     {
-    //         qDebug() << allPossibleMoves[i].first->getPos();
-    //         qDebug() << allPossibleMoves[i].first->getColor() << allPossibleMoves[i].second.first << allPossibleMoves[i].second.second;
-    //     }
-    // }
-    // qDebug() << "-------------------------------";
+    findOptimalMove(pieceOnBoard, 6, 0, 0, whoMove);
 
 }
 
 MinMax::~MinMax()
 {
-    int row = m_pieceOnBoard.size();
-    int col = m_pieceOnBoard[0].size();
-    for(int i = 0; i < row; i++)
-    {
-        for(int j = 0; j < col; j++)
-        {
-            if(m_pieceOnBoard[i][j] != nullptr)
-            {
-                delete m_pieceOnBoard[i][j];
-            }
-        }
-    }
+
 }

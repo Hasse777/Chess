@@ -5,6 +5,8 @@
 class ChessPieceForArtifical
 {
 private:
+
+protected:
     bool m_color;
     unsigned short m_piece;
     std::pair<int, int> m_posXY; // позиция фигуры

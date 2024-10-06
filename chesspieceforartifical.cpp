@@ -53,7 +53,9 @@ KingPieceForArtifical::KingPieceForArtifical(bool color, unsigned short piece, s
 
 KingPieceForArtifical* KingPieceForArtifical::clone()
 {
-    return new KingPieceForArtifical(*this);
+    KingPieceForArtifical* piece = new KingPieceForArtifical(this->m_color, this->m_piece, this->m_posXY, this->m_firstMove);
+    piece->m_shah = this->m_shah;
+    return piece;
 }
 
 bool KingPieceForArtifical::getFirstMove() const
@@ -89,7 +91,8 @@ ChessPieceForArtifical(color, piece, posXY)
 
 QueenPieceForArtifical *QueenPieceForArtifical::clone()
 {
-    return new QueenPieceForArtifical(*this);
+    QueenPieceForArtifical* piece = new QueenPieceForArtifical(this->m_color, this->m_piece, this->getPos());
+    return piece;
 }
 
 QueenPieceForArtifical::~QueenPieceForArtifical()
@@ -110,7 +113,8 @@ bool RookPieceForArtifical::getFirstMove() const
 
 RookPieceForArtifical *RookPieceForArtifical::clone()
 {
-    return new RookPieceForArtifical(*this);
+    RookPieceForArtifical* piece = new RookPieceForArtifical(this->m_color, this->m_piece, this->m_posXY, this->m_firstMove);
+    return piece;
 }
 
 void RookPieceForArtifical::setFirstMove()
@@ -131,7 +135,8 @@ ChessPieceForArtifical(color, piece, posXY)
 
 ElephantPieceForArtifical *ElephantPieceForArtifical::clone()
 {
-    return new ElephantPieceForArtifical(*this);
+    ElephantPieceForArtifical* piece = new ElephantPieceForArtifical(this->m_color, this->m_piece, this->m_posXY);
+    return piece;
 }
 
 ElephantPieceForArtifical::~ElephantPieceForArtifical()
@@ -147,7 +152,8 @@ ChessPieceForArtifical(color, piece, posXY)
 
 HorsePieceForArtifical *HorsePieceForArtifical::clone()
 {
-    return new HorsePieceForArtifical(*this);
+    HorsePieceForArtifical* piece = new HorsePieceForArtifical(this->m_color, this->m_piece, this->m_posXY);
+    return piece;
 }
 
 HorsePieceForArtifical::~HorsePieceForArtifical()
@@ -173,7 +179,8 @@ void PawnPieceForArtifical::setFirstMove()
 
 PawnPieceForArtifical *PawnPieceForArtifical::clone()
 {
-    return new PawnPieceForArtifical(*this);
+    PawnPieceForArtifical* piece = new PawnPieceForArtifical(this->m_color, this->m_piece, this->m_posXY, this->m_firstMove);
+    return piece;
 }
 
 PawnPieceForArtifical::~PawnPieceForArtifical()
