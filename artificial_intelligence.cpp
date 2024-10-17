@@ -16,6 +16,7 @@ Artificial_Intelligence::Artificial_Intelligence(const ChessBoard * const chessB
     }
     m_color = color;
     m_botPlayForColor = color;
+    m_MinMax = nullptr;
 }
 
 Artificial_Intelligence::~Artificial_Intelligence()
@@ -25,21 +26,24 @@ Artificial_Intelligence::~Artificial_Intelligence()
 
 void Artificial_Intelligence::freeMemory()
 {
-    int row = m_pieceOnBoard.size();
-    int col = m_pieceOnBoard[0].size();
-    for(int i = 0; i < row; i++)
+    if(m_MinMax != nullptr)
     {
-        for(int j = 0; j < col; j++)
+        int row = m_pieceOnBoard.size();
+        int col = m_pieceOnBoard[0].size();
+        for(int i = 0; i < row; i++)
         {
-            if(m_pieceOnBoard[i][j] != nullptr)
+            for(int j = 0; j < col; j++)
             {
-                delete m_pieceOnBoard[i][j];
-                m_pieceOnBoard[i][j] = nullptr;
+                if(m_pieceOnBoard[i][j] != nullptr)
+                {
+                    delete m_pieceOnBoard[i][j];
+                    m_pieceOnBoard[i][j] = nullptr;
+                }
             }
         }
+        delete m_MinMax;
+        m_MinMax = nullptr;
     }
-    delete m_MinMax;
-    m_MinMax = nullptr;
 }
 
 void Artificial_Intelligence::slot_MoveBot()
@@ -73,15 +77,13 @@ void Artificial_Intelligence::slot_MoveBot()
             }
         }
     }
-
-
     m_MinMax = new MinMax(m_color, m_pieceOnBoard);
     freeMemory();
 }
 
 
 
-void MinMax::distributionByChessPiece(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves)
+void MinMax::distributionByChessPiece(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves, bool color)
 {
     int row = pieceOnBoard.size();
     int col = pieceOnBoard[0].size();
@@ -95,7 +97,7 @@ void MinMax::distributionByChessPiece(const QVector<QVector<ChessPieceForArtific
         for(int j = 0; j < col; j++)
         {
             ChessPieceForArtifical* piece = pieceOnBoard[i][j];
-            if(piece != nullptr && piece->getColor() == m_whoMove)
+            if(piece != nullptr && piece->getColor() == color)
             {
                 switch (piece->getPiece())
                 {
@@ -118,7 +120,8 @@ void MinMax::countingPossibleMovesPawn(ChessPieceForArtifical* piece, const QVec
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
-    bool direction = (m_botPlayForColor == m_whoMove ? 1 : -1);
+    bool color = piece->getColor();
+    bool direction = (m_botPlayForColor == color ? 1 : -1);
     // Проверка возможности ходов вперед
     {
         int quantitMove = (piece->getFirstMove() == 1 ? 2 : 1);
@@ -134,7 +137,7 @@ void MinMax::countingPossibleMovesPawn(ChessPieceForArtifical* piece, const QVec
             {
                 allPossibleMoves.push_back({piece, {newRow, col}});
             }
-            else if(pieceOnBoard[newRow][col] != nullptr && pieceOnBoard[newRow][col]->getColor() != m_whoMove)
+            else if(pieceOnBoard[newRow][col] != nullptr && pieceOnBoard[newRow][col]->getColor() != color)
             {
                 allPossibleMoves.push_back({piece, {newRow, col}});
             }
@@ -152,12 +155,12 @@ void MinMax::countingPossibleMovesPawn(ChessPieceForArtifical* piece, const QVec
         return;
     }
     int newCol = col + 1;
-    if(newCol >= 0 && newCol < 8 && pieceOnBoard[newRow][newCol] != nullptr)
+    if(newCol >= 0 && newCol < 8 && pieceOnBoard[newRow][newCol] != nullptr && pieceOnBoard[newRow][newCol]->getColor() != color)
     {
         allPossibleMoves.push_back({piece, {newRow, newCol}});
     }
     newCol = col - 1;
-    if(newCol >= 0 && newCol < 8 && pieceOnBoard[newRow][newCol] != nullptr)
+    if(newCol >= 0 && newCol < 8 && pieceOnBoard[newRow][newCol] != nullptr && pieceOnBoard[newRow][newCol]->getColor() != color)
     {
         allPossibleMoves.push_back({piece, {newRow, newCol}});
     }
@@ -167,6 +170,7 @@ void MinMax::countingPossibleMovesHorse(ChessPieceForArtifical* piece, const QVe
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
+    bool color = piece->getColor();
     QVector<std::pair<int, int>> direction
         {
             {row + 1, col + 2}, {row - 1, col + 2}, {row + 1, col - 2}, {row - 1, col -2},
@@ -179,7 +183,7 @@ void MinMax::countingPossibleMovesHorse(ChessPieceForArtifical* piece, const QVe
         int j = it->second;
         if(i >= 0 && i < 8 && j >= 0 && j < 8)
         {
-            if(pieceOnBoard[i][j] == nullptr || (pieceOnBoard[i][j] != nullptr && pieceOnBoard[i][j]->getColor() != m_whoMove))
+            if(pieceOnBoard[i][j] == nullptr || (pieceOnBoard[i][j] != nullptr && pieceOnBoard[i][j]->getColor() != color))
             {
                 allPossibleMoves.push_back({piece, {i, j}});
             }
@@ -192,6 +196,7 @@ void MinMax::countingPossibleMovesElephant(ChessPieceForArtifical* piece, const 
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
+    bool color = piece->getColor();
     QVector<std::pair<int, int>> direction
         {
             {1, 1}, {1, -1},{-1, 1},{-1, -1}
@@ -210,7 +215,7 @@ void MinMax::countingPossibleMovesElephant(ChessPieceForArtifical* piece, const 
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
                 continue;
             }
-            else if(pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
+            else if(pieceOnBoard[newRow][newCol]->getColor() != color)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
             }
@@ -232,6 +237,7 @@ void MinMax::countingPossibleMovesRook(ChessPieceForArtifical* piece, const QVec
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
+    bool color = piece->getColor();
     QVector<std::pair<int, int>> direction
         {
             {0, 1}, {0, -1},{1, 0},{-1, 0}
@@ -250,7 +256,7 @@ void MinMax::countingPossibleMovesRook(ChessPieceForArtifical* piece, const QVec
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
                 continue;
             }
-            else if(pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
+            else if(pieceOnBoard[newRow][newCol]->getColor() != color)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
             }
@@ -271,6 +277,7 @@ void MinMax::countingPossibleMovesQueen(ChessPieceForArtifical* piece, const QVe
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
+    bool color = piece->getColor();
     QVector<std::pair<int, int>> direction
         {
             {0, 1}, {0, -1},{1, 0},{-1, 0},
@@ -290,7 +297,7 @@ void MinMax::countingPossibleMovesQueen(ChessPieceForArtifical* piece, const QVe
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
                 continue;
             }
-            else if(pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
+            else if(pieceOnBoard[newRow][newCol]->getColor() != color)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
             }
@@ -311,6 +318,7 @@ void MinMax::countingPossibleMovesKing(ChessPieceForArtifical* piece, const QVec
 {
     int row = piece->getPos().first;
     int col = piece->getPos().second;
+    bool color = piece->getColor();
     QVector<std::pair<int, int>> direction
         {
             {0, 1}, {0, -1},{1, 0},{-1, 0},
@@ -325,7 +333,7 @@ void MinMax::countingPossibleMovesKing(ChessPieceForArtifical* piece, const QVec
         newCol += it->second;
         if(newRow >= 0 && newRow < 8 && newCol >=0 && newCol < 8)
         {
-            if(pieceOnBoard[newRow][newCol] == nullptr || pieceOnBoard[newRow][newCol]->getColor() != m_whoMove)
+            if(pieceOnBoard[newRow][newCol] == nullptr || pieceOnBoard[newRow][newCol]->getColor() != color)
             {
                 allPossibleMoves.push_back({piece, {newRow, newCol}});
 
@@ -375,39 +383,75 @@ int MinMax::evaluateBoard(const QVector<QVector<ChessPieceForArtifical*>>& piece
     return scoreBoard;
 }
 
+
 int MinMax::findOptimalMove(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, int depth, int alpha, int beta, bool maxOrminPlayer)
 {
-    if(m_depth == 0)
+    if(depth <= 0)
     {
         return evaluateBoard(pieceOnBoard);
     }
+
     // Все возможные ходы
     QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>> allPossibleMoves;
     QVector<QVector<ChessPieceForArtifical*>> *tempBoard = this->copyPieceOnBoard_in_tempBoard(pieceOnBoard);
-
+    int bestEval = -1;
 
     if(maxOrminPlayer == 0) // Максимизирующий игрок
     {
-        int maxEval = std::numeric_limits<int>::min();
-        distributionByChessPiece(pieceOnBoard, allPossibleMoves);
+        bestEval = std::numeric_limits<int>::min();
+        distributionByChessPiece(*tempBoard, allPossibleMoves, maxOrminPlayer);
+
         for(int i = 0; i < allPossibleMoves.size(); i++)
         {
             ChessPieceForArtifical* piece = allPossibleMoves[i].first;
+            // Переменные для того чтобы откатить сделанный ход без прохода по всему массиву
+            std::pair<int, int> moveFrom = piece->getPos(); // откуда был сделан ход
+            std::pair<int, int> moveHere = allPossibleMoves[i].second; // куда будет сделан ход
+
             makeMove(piece, allPossibleMoves[i].second, *tempBoard);
-            // Написать откат хода
-            int eval = findOptimalMove(*tempBoard, depth - 1, alpha, beta, !maxOrminPlayer);
+            int eval = findOptimalMove(*(tempBoard), depth - 1, alpha, beta, !maxOrminPlayer);
+
+
+            undoMove(pieceOnBoard, *tempBoard, moveFrom, moveHere);
+
+            bestEval = std::max(bestEval, eval);
+            alpha = std::max(alpha, eval);
+            if (beta <= alpha)
+            {
+                break;
+            }
         }
-        return maxEval;
     }
     else
     {
-        int minEval = std::numeric_limits<int>::max();
-        return minEval;
+        bestEval = std::numeric_limits<int>::max();
+        distributionByChessPiece(*tempBoard, allPossibleMoves, maxOrminPlayer);
+        for(int i = 0; i < allPossibleMoves.size(); i++)
+        {
+            ChessPieceForArtifical* piece = allPossibleMoves[i].first;
+            // Переменные для того чтобы откатить сделанный ход без прохода по всему массиву
+            std::pair<int, int> moveFrom = piece->getPos(); // откуда был сделан ход
+            std::pair<int, int> moveHere = allPossibleMoves[i].second; // куда будет сделан ход
+
+
+            makeMove(piece, allPossibleMoves[i].second, *tempBoard); // Делаем ход
+            int eval = findOptimalMove(*tempBoard, depth - 1, alpha, beta, !maxOrminPlayer);
+            undoMove(pieceOnBoard, *tempBoard, moveFrom, moveHere);
+            bestEval = std::min(bestEval, eval);
+            beta = std::min(beta, eval);
+            if (beta <= alpha)
+            {
+                break;
+            }
+        }
     }
+
+
     clearTempPieceOnBoard(*tempBoard);
-    allPossibleMoves.clear();
+    delete tempBoard;
     tempBoard = nullptr;
-    return -1;
+    allPossibleMoves.clear();
+    return bestEval;
 }
 
 QVector<QVector<ChessPieceForArtifical*>>* MinMax::copyPieceOnBoard_in_tempBoard(const QVector<QVector<ChessPieceForArtifical *> > &pieceOnBoard)
@@ -476,8 +520,10 @@ void MinMax::makeMove(ChessPieceForArtifical *piece, std::pair<int, int> coordin
 {
     int oldRow = piece->getPos().first;
     int oldCol = piece->getPos().second;
+
     int newRow = coordinates.first;
     int newCol = coordinates.second;
+
     if(newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8 || pieceOnBoard.size() != 8 || pieceOnBoard[0].size() != 8)
     {
         QMessageBox::critical(nullptr, "Error", "Parameters aren't correct in makeMove");
@@ -493,6 +539,28 @@ void MinMax::makeMove(ChessPieceForArtifical *piece, std::pair<int, int> coordin
     pieceOnBoard[newRow][newCol] = piece;
     piece->setPos(coordinates);
 }
+
+void MinMax::undoMove(const QVector<QVector<ChessPieceForArtifical *> > &initialPieceOnBoard, QVector<QVector<ChessPieceForArtifical *> > &pieceOnBoard, std::pair<int, int> moveFrom, std::pair<int, int> moveHere)
+{
+    if(moveFrom.first < 0 || moveFrom.second >= 8 || moveHere.first < 0 || moveHere.second >= 8)
+    {
+        QMessageBox::critical(nullptr, "Error", "Unable to perform undo move");
+        QApplication::quit();
+    }
+    ChessPieceForArtifical* piece = pieceOnBoard[moveHere.first][moveHere.second];
+    if(initialPieceOnBoard[moveHere.first][moveHere.second] != nullptr)
+    {
+        pieceOnBoard[moveHere.first][moveHere.second] = initialPieceOnBoard[moveHere.first][moveHere.second]->clone();
+    }
+    else
+    {
+        pieceOnBoard[moveHere.first][moveHere.second] = nullptr;
+    }
+    pieceOnBoard[moveFrom.first][moveFrom.second] = piece;
+    piece->setPos(moveFrom);
+}
+
+
 
 bool MinMax::pieceUnderAttack(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, std::pair<int, int> coordinates, bool color)
 {
@@ -688,6 +756,14 @@ MinMax::MinMax(bool whoMove, const QVector<QVector<ChessPieceForArtifical*>>& pi
     }
 
     findOptimalMove(pieceOnBoard, 6, 0, 0, whoMove);
+    // QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>> allPossibleMoves;
+    // distributionByChessPiece(m_pieceOnBoard, allPossibleMoves, 1);
+    // for(int i = 0; i < allPossibleMoves.size(); i++)
+    // {
+    //     ChessPieceForArtifical* piece = allPossibleMoves[i].first;
+    //     std::pair<int, int> c = allPossibleMoves[i].second;
+    //     qDebug() << piece->getPiece() << piece->getPos() << c;
+    // }
 
 }
 

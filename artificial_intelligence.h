@@ -42,6 +42,7 @@ class MinMax
 private:
     int m_depth = 6; // глубина n-дерева
     bool m_whoMove; // кто ходит
+    //----------------------------------------------------------
     // Указатели на королей
     //----------------------------------------------------------
     ChessPieceForArtifical* m_whiteKing;
@@ -59,7 +60,7 @@ private:
     //---------------------------------------------------------
     // enum m_pieceType{none, king, queen, rook, elephant, horse, pawn}; // Перечисление очков фигур для оценивания хода
     void distributionByChessPiece(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/
-    QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/); // Функции для записи всех возможных ходов для фигур
+    QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/, bool color /*- цвет стороны, для которой будет считаться возможные ходы*/); // Функции для записи всех возможных ходов для фигур
     bool pieceUnderAttack(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard /*- Массив где будет проверка*/, std::pair<int, int> coordinates, bool color); // Функция для проверки находится ли клетка под атакой, color - цвет фигуры на клетке
     void countingPossibleMovesPawn(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/ QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/);
     void countingPossibleMovesHorse(ChessPieceForArtifical* piece, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/ QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>>& allPossibleMoves /*- Куда будут записываться ходы*/);
@@ -74,6 +75,8 @@ private:
     void clearTempPieceOnBoard(QVector<QVector<ChessPieceForArtifical*>>& board);
     int evaluatePiece(ChessPieceForArtifical* piece) const; // Функция, которая возвращает стоимость фигуры
     void makeMove(ChessPieceForArtifical* piece, std::pair<int, int> coordinates, QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard /*- Массив где будет делаться ход*/); // Функция, которая делает ход и фиксирует его во временном массиве m_pieceOnBoard_Temp
+    void undoMove(const QVector<QVector<ChessPieceForArtifical*>>& initialPieceOnBoard /*- Массив изначального состояния*/, QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard /*- Массив где нужно сделать отмену хода*/, std::pair<int, int> moveFrom /*- Откуда был ход*/, std::pair<int, int> moveHere /*- Куда был ход*/);
+    //void testUndoMove(const QVector<QVector<ChessPieceForArtifical*>>& initialPieceOnBoard /*- Массив изначального состояния*/, QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard /*- Массив где нужно сделать отмену хода*/);
     // //-----------------------------------------------------------------
 
 public:
