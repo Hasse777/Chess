@@ -140,6 +140,10 @@ void MinMax::countingPossibleMovesPawn(ChessPieceForArtifical* piece, const QVec
             {
                 allPossibleMoves.push_back({piece, {newRow, col}});
             }
+            else
+            {
+                break;
+            }
             quantitMove--;
         }
     }
