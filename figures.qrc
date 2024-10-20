@@ -15,5 +15,6 @@
         <file>figures_img/Black_elephant.png</file>
 		<file>figures_img/Black_kingMove.png</file>
 		<file>figures_img/White_kingMove.png</file>
+		<file>figures_img/mainPiece.png</file>
     </qresource>
 </RCC>

@@ -10,6 +10,7 @@ class EatenPieces : public QLabel
 {
 private:
     QGridLayout* m_layout;
+    QLabel* m_label;
     QList<QLabel*> m_list_label;
     QList<QLabel*> m_list_img;
 public:

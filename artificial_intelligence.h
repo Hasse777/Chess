@@ -7,6 +7,7 @@
 
 \
 class ChessBoard;
+class ChessPiece;
 class MinMax;
 
 //bool bot_color;
@@ -31,7 +32,7 @@ private:
 public slots:
     void slot_MoveBot();
 signals:
-    void signal_BotChoseMove(std::pair<int, int> coordinates);
+    void signal_BotChoseMove(std::pair<int, int> coordinatesPiece, std::pair<int, int> moveWhere);
 };
 
 
@@ -40,7 +41,7 @@ signals:
 class MinMax
 {
 private:
-    int m_depth = 6; // глубина n-дерева
+    int m_depth = 4; // глубина n-дерева
     bool m_whoMove; // кто ходит
     //----------------------------------------------------------
     // Указатели на королей
@@ -56,7 +57,7 @@ private:
     QVector<QVector<ChessPieceForArtifical*>> m_pieceOnBoard{8, QVector<ChessPieceForArtifical*>(8, nullptr)};
     //----------------------------------------------------------
     // Лучший ход
-    std::pair<ChessPieceForArtifical*, std::pair<int, int>> m_bestMove; // лучший ход, ChessPieceForArtifical обьект фигуры, std::pair<int, int> куда она ходит
+    std::pair<std::pair<int, int>, std::pair<int, int>> m_bestMove; // лучший ход, первый параметр откуда был ход, второй куда
     //---------------------------------------------------------
     // enum m_pieceType{none, king, queen, rook, elephant, horse, pawn}; // Перечисление очков фигур для оценивания хода
     void distributionByChessPiece(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, /*- Массив откуда будет запись*/
@@ -76,12 +77,11 @@ private:
     int evaluatePiece(ChessPieceForArtifical* piece) const; // Функция, которая возвращает стоимость фигуры
     void makeMove(ChessPieceForArtifical* piece, std::pair<int, int> coordinates, QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard /*- Массив где будет делаться ход*/); // Функция, которая делает ход и фиксирует его во временном массиве m_pieceOnBoard_Temp
     void undoMove(const QVector<QVector<ChessPieceForArtifical*>>& initialPieceOnBoard /*- Массив изначального состояния*/, QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard /*- Массив где нужно сделать отмену хода*/, std::pair<int, int> moveFrom /*- Откуда был ход*/, std::pair<int, int> moveHere /*- Куда был ход*/);
-    //void testUndoMove(const QVector<QVector<ChessPieceForArtifical*>>& initialPieceOnBoard /*- Массив изначального состояния*/, QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard /*- Массив где нужно сделать отмену хода*/);
-    // //-----------------------------------------------------------------
 
 public:
     MinMax(bool whoMove, const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard);
     ~MinMax();
+    std::pair<std::pair<int, int>, std::pair<int, int>> getBestMove() const;
 };
 
 

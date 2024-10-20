@@ -78,6 +78,9 @@ void Artificial_Intelligence::slot_MoveBot()
         }
     }
     m_MinMax = new MinMax(m_color, m_pieceOnBoard);
+    std::pair<int, int> coordinatesPiece = m_MinMax->getBestMove().first;
+    std::pair<int, int> moveWhere = m_MinMax->getBestMove().second;
+    emit signal_BotChoseMove(coordinatesPiece, moveWhere);
     freeMemory();
 }
 
@@ -136,14 +139,6 @@ void MinMax::countingPossibleMovesPawn(ChessPieceForArtifical* piece, const QVec
             if(pieceOnBoard[newRow][col] == nullptr)
             {
                 allPossibleMoves.push_back({piece, {newRow, col}});
-            }
-            else if(pieceOnBoard[newRow][col] != nullptr && pieceOnBoard[newRow][col]->getColor() != color)
-            {
-                allPossibleMoves.push_back({piece, {newRow, col}});
-            }
-            else
-            {
-
             }
             quantitMove--;
         }
@@ -410,11 +405,19 @@ int MinMax::findOptimalMove(const QVector<QVector<ChessPieceForArtifical*>>& pie
 
             makeMove(piece, allPossibleMoves[i].second, *tempBoard);
             int eval = findOptimalMove(*(tempBoard), depth - 1, alpha, beta, !maxOrminPlayer);
-
-
             undoMove(pieceOnBoard, *tempBoard, moveFrom, moveHere);
 
-            bestEval = std::max(bestEval, eval);
+
+            if (eval > bestEval)
+            {
+                bestEval = eval;
+                if (maxOrminPlayer == m_botPlayForColor && depth == m_depth) // Обновляем лучший ход
+                {
+                    m_bestMove.first = moveFrom;
+                    m_bestMove.second = moveHere;
+                }
+            }
+
             alpha = std::max(alpha, eval);
             if (beta <= alpha)
             {
@@ -433,11 +436,21 @@ int MinMax::findOptimalMove(const QVector<QVector<ChessPieceForArtifical*>>& pie
             std::pair<int, int> moveFrom = piece->getPos(); // откуда был сделан ход
             std::pair<int, int> moveHere = allPossibleMoves[i].second; // куда будет сделан ход
 
-
             makeMove(piece, allPossibleMoves[i].second, *tempBoard); // Делаем ход
             int eval = findOptimalMove(*tempBoard, depth - 1, alpha, beta, !maxOrminPlayer);
             undoMove(pieceOnBoard, *tempBoard, moveFrom, moveHere);
-            bestEval = std::min(bestEval, eval);
+
+
+            if (eval < bestEval)
+            {
+                bestEval = eval;
+                if (maxOrminPlayer == m_botPlayForColor && depth == m_depth) // Обновляем лучший ход
+                {
+                    m_bestMove.first = moveFrom;
+                    m_bestMove.second = moveHere;
+                }
+            }
+
             beta = std::min(beta, eval);
             if (beta <= alpha)
             {
@@ -445,7 +458,6 @@ int MinMax::findOptimalMove(const QVector<QVector<ChessPieceForArtifical*>>& pie
             }
         }
     }
-
 
     clearTempPieceOnBoard(*tempBoard);
     delete tempBoard;
@@ -560,6 +572,10 @@ void MinMax::undoMove(const QVector<QVector<ChessPieceForArtifical *> > &initial
     piece->setPos(moveFrom);
 }
 
+std::pair<std::pair<int, int>, std::pair<int, int>> MinMax::getBestMove() const
+{
+    return m_bestMove;
+}
 
 
 bool MinMax::pieceUnderAttack(const QVector<QVector<ChessPieceForArtifical*>>& pieceOnBoard, std::pair<int, int> coordinates, bool color)
@@ -755,19 +771,35 @@ MinMax::MinMax(bool whoMove, const QVector<QVector<ChessPieceForArtifical*>>& pi
         }
     }
 
-    findOptimalMove(pieceOnBoard, 6, 0, 0, whoMove);
-    // QVector<std::pair<ChessPieceForArtifical*, std::pair<int, int>>> allPossibleMoves;
-    // distributionByChessPiece(m_pieceOnBoard, allPossibleMoves, 1);
-    // for(int i = 0; i < allPossibleMoves.size(); i++)
+    // for(int i = 0; i < row; i++)
     // {
-    //     ChessPieceForArtifical* piece = allPossibleMoves[i].first;
-    //     std::pair<int, int> c = allPossibleMoves[i].second;
-    //     qDebug() << piece->getPiece() << piece->getPos() << c;
+    //     for(int j = 0; j < col; j++)
+    //     {
+    //         if(pieceOnBoard[i][j] != nullptr)
+    //         {
+    //             qDebug() << "i =" << i << "j =" << j <<  pieceOnBoard[i][j]->getPos();
+    //         }
+    //     }
     // }
+
+    findOptimalMove(pieceOnBoard, m_depth, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), whoMove);
+
 
 }
 
 MinMax::~MinMax()
 {
-
+    int row = m_pieceOnBoard.size();
+    int col = m_pieceOnBoard[0].size();
+    for(int i = 0; i < row; i++)
+    {
+        for(int j = 0; j < col; j++)
+        {
+            if(m_pieceOnBoard[i][j] != nullptr)
+            {
+                delete m_pieceOnBoard[i][j];
+                m_pieceOnBoard[i][j] = nullptr;
+            }
+        }
+    }
 }

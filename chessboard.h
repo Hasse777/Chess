@@ -74,7 +74,7 @@ protected:
 private slots:
      void slot_PiecePressed(ChessPiece* piece);
      void slot_HighlightedCell_Clicked(QGraphicsRectItem* cell);
-     void slot_MoveBot(/*ChessPiece *piece, */std::pair<int, int> coordinates);
+     void slot_MoveBot(std::pair<int, int> coordinatesPiece, std::pair<int, int> moveWhere);
      void slot_PlayerColor(bool color);
  public slots:
      void slot_newGame();

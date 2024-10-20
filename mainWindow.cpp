@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     setWindowState(Qt::WindowMaximized);
     m_central_widget = new QWidget(this);
     setCentralWidget(m_central_widget);
+    setWindowIcon(QIcon(":/figures_img/mainPiece.png"));
 
     // Создаем виджеты
     m_chessBoard = new ChessBoard(m_central_widget);
